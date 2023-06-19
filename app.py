@@ -17,7 +17,10 @@ def update_airtable_record(record_id, state, last_command):
 def update_airtable_trend(symbol, trend):
     record = get_matching_record(symbol)
     if record:
+        print(f"Updating record for {symbol} with trend {trend}")
         airtable.update(record['id'], {'Trend': trend})
+    else:
+        print(f"No record found for {symbol}")
 
 def send_to_pineconnector(action, symbol, risk):
     data = f"{config.LICENSE_ID},{action},{symbol},risk={risk}"
