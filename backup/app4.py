@@ -11,8 +11,11 @@ def get_matching_record(symbol):
     records = airtable.get_all(formula=f"{{Symbol}} = '{symbol}'")
     return records[0] if records else None
 
-def update_airtable_record(record_id, state, last_command):
-    airtable.update(record_id, {'State': state, 'Last Command': last_command})
+def update_airtable_record(record_id, state, last_command, trend=None):
+    data = {'State': state, 'Last Command': last_command}
+    if trend is not None:
+        data['Trend'] = trend
+    airtable.update(record_id, data)
 
 def send_to_pineconnector(action, symbol, risk):
     data = f"{config.LICENSE_ID},{action},{symbol},risk={risk}"
@@ -29,7 +32,7 @@ def webhook():
         record = get_matching_record(symbol)
         if record:
             print(f"Updating trend for {symbol} to {trend}")
-            airtable.update(record['id'], {'Trend': trend})
+            update_airtable_record(record['id'], record['fields']['State'], record['fields']['Last Command'], trend)
     else:  # This is a buy/sell command
         command, symbol, *risk = parts
         risk = float(risk[0].split('=')[1]) if risk and '=' in risk[0] else float(risk[0]) if risk else 0.45
