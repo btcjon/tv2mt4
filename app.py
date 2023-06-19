@@ -25,7 +25,7 @@ def send_to_pineconnector(action, symbol, risk):
 def webhook():
     data = request.data.decode('utf-8')
     command, symbol, *risk = data.split()
-    risk = float(risk[0]) if risk else 0.45
+    risk = float(risk[0].split('=')[1]) if risk else 0.45
     app.logger.info(f"Received {command} command for {symbol} with risk {risk}")
     record = get_matching_record(symbol)
     if record:
