@@ -23,8 +23,9 @@ def send_to_pineconnector(action, symbol, risk):
 def webhook():
     data = request.data.decode('utf-8')
     parts = data.split()
-    if len(parts) == 2 and parts[1] in ["up", "down"]:  # This is a trend update
-        symbol, trend = parts
+    if len(parts) == 3 and parts[1] == 'trend':  # This is a trend update
+        symbol, _, trend = parts
+        trend = trend.split('=')[1] if '=' in trend else trend
         record = get_matching_record(symbol)
         if record:
             print(f"Updating trend for {symbol} to {trend}")
