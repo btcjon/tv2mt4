@@ -11,11 +11,14 @@ def get_matching_record(symbol):
     records = airtable.get_all(formula=f"{{Symbol}} = '{symbol}'")
     return records[0] if records else None
 
-def update_airtable_record(record_id, state, last_command, trend=None):
-    data = {'State': state, 'Last Command': last_command}
-    if trend is not None:
-        data['Trend'] = trend
-    airtable.update(record_id, data)
+def update_airtable_record(record_id, state, last_command):
+    airtable.update(record_id, {'State': state, 'Last Command': last_command})
+
+def update_airtable_trend(symbol, trend):
+    record = get_matching_record(symbol)
+    if record:
+        print(f"Updating trend for {symbol} to {trend}")
+        airtable.update(record['id'], {'Trend': trend})
 
 def send_to_pineconnector(action, symbol, risk):
     data = f"{config.LICENSE_ID},{action},{symbol},risk={risk}"
@@ -26,26 +29,24 @@ def send_to_pineconnector(action, symbol, risk):
 def webhook():
     data = request.data.decode('utf-8')
     parts = data.split()
-    if len(parts) == 3 and parts[1] == 'trend':  # This is a trend update
-        symbol, _, trend = parts
-        trend = trend.split('=')[1] if '=' in trend else trend
-        record = get_matching_record(symbol)
-        if record:
-            print(f"Updating trend for {symbol} to {trend}")
-            update_airtable_record(record['id'], record['fields']['State'], record['fields']['Last Command'], trend)
-    else:  # This is a buy/sell command
-        command, symbol, *risk = parts
-        risk = float(risk[0].split('=')[1]) if risk and '=' in risk[0] else float(risk[0]) if risk else 0.45
-        print(f"Received {command} command for {symbol} with risk {risk}")
+    command = parts[0]
+    symbol = parts[1]
+    risk = float(parts[2].split('=')[-1]) if len(parts) > 2 else 0.45
+    print(f"Received {command} command for {symbol} with risk {risk}")
+    if command in ['buy', 'sell']:
         record = get_matching_record(symbol)
         if record:
             print(f"Found record for {symbol} with state {record['fields']['State']} and trend {record['fields']['Trend']}")
-            if command == "buy" and (record['fields']['State'] != "closed" or record['fields']['Trend'] != "down"):
+            if command == 'buy' and (record['fields']['State'] != 'closed' or record['fields']['Trend'] != 'down'):
                 send_to_pineconnector(command, symbol, risk)
-                update_airtable_record(record['id'], "open", command)
-            elif command == "sell":
-                send_to_pineconnector("closelong", symbol, risk)
-                update_airtable_record(record['id'], "closed", command)
+                update_airtable_record(record['id'], 'open', command)
+            elif command == 'sell':
+                send_to_pineconnector('closelong', symbol, risk)
+                update_airtable_record(record['id'], 'closed', command)
+    elif command == 'trend':
+        trend = symbol.split('=')[-1]
+        symbol = symbol.split('=')[0]
+        update_airtable_trend(symbol, trend)
     return '', 200
 
 if __name__ == '__main__':
