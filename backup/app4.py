@@ -32,7 +32,7 @@ def webhook():
             airtable.update(record['id'], {'Trend': trend})
     else:  # This is a buy/sell command
         command, symbol, *risk = parts
-        risk = float(risk[0].split('=')[1]) if risk else 0.45
+        risk = float(risk[0].split('=')[1]) if risk and '=' in risk[0] else float(risk[0]) if risk else 0.45
         print(f"Received {command} command for {symbol} with risk {risk}")
         record = get_matching_record(symbol)
         if record:
