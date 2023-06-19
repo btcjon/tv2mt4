@@ -2,39 +2,30 @@ from flask import Flask, request
 from airtable import Airtable
 import requests
 import config
+import logging
 
 app = Flask(__name__)
-app.debug = True
+logging.basicConfig(level=logging.INFO)
 
 airtable = Airtable(config.AIRTABLE_BASE_ID, config.AIRTABLE_TABLE_NAME, api_key=config.AIRTABLE_API_KEY)
 
 def get_matching_record(symbol):
-    try:
-        records = airtable.get_all(formula=f"{{Symbol}} = '{symbol}'")
-        return records[0] if records else None
-    except Exception as e:
-        app.logger.error(f"Error getting record for {symbol}: {e}")
-        return None
+    records = airtable.get_all(formula=f"{{Symbol}} = '{symbol}'")
+    return records[0] if records else None
 
 def update_airtable_record(record_id, state, last_command):
-    try:
-        airtable.update(record_id, {'State': state, 'Last Command': last_command})
-    except Exception as e:
-        app.logger.error(f"Error updating record {record_id}: {e}")
+    airtable.update(record_id, {'State': state, 'Last Command': last_command})
 
 def send_to_pineconnector(action, symbol, risk):
-    try:
-        data = f"{config.LICENSE_ID},{action},{symbol},risk={risk}"
-        response = requests.post(config.PINECONNECTOR_WEBHOOK_URL, data=data)
-        app.logger.info(f"Sent {action} command for {symbol} to Pineconnector, response: {response.text}")
-    except Exception as e:
-        app.logger.error(f"Error sending {action} command for {symbol} to Pineconnector: {e}")
+    data = f"{config.LICENSE_ID},{action},{symbol},risk={risk}"
+    response = requests.post(config.PINECONNECTOR_WEBHOOK_URL, data=data)
+    app.logger.info(f"Sent {action} command for {symbol} to Pineconnector, response: {response.text}")
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
     data = request.data.decode('utf-8')
     command, symbol, *risk = data.split()
-    risk = risk[0] if risk else "0.45"
+    risk = float(risk[0]) if risk else 0.45
     app.logger.info(f"Received {command} command for {symbol} with risk {risk}")
     record = get_matching_record(symbol)
     if record:
