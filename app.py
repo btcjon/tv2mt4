@@ -5,6 +5,9 @@ import config
 import logging
 
 app = Flask(__name__)
+handler = logging.StreamHandler()
+handler.setLevel(logging.DEBUG)
+app.logger.addHandler(handler)
 app.logger.setLevel(logging.DEBUG)
 
 airtable = Airtable(config.AIRTABLE_BASE_ID, config.AIRTABLE_TABLE_NAME, api_key=config.AIRTABLE_API_KEY)
