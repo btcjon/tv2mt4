@@ -34,6 +34,7 @@ def send_to_pineconnector(action, symbol, risk):
 @app.route('/webhook', methods=['POST'])
 def webhook():
     data = request.data.decode('utf-8')
+    app.logger.debug(f"Received webhook data: {data}")
     command, symbol, *risk = data.split()
     risk = float(risk[0]) if risk else 0.2
     print(f"Received {command} command for {symbol} with risk {risk}")
