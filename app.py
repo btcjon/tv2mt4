@@ -44,21 +44,25 @@ def webhook():
         # This is a buy or sell webhook
         command, symbol, *risk = parts
 
-    risk = float(risk[0]) if risk else 0.1
+    risk = float(risk[0]) if risk else 0.2
     app.logger.debug(f"Parsed command: {command}, symbol: {symbol}, risk: {risk}")
 
     record = get_matching_record(symbol)
     if record:
         app.logger.debug(f"Found record for {symbol} with state {record['fields']['State']} and trend {record['fields']['Trend']}")
-        if command == "buy" and (record['fields']['State'] != "closed" or record['fields']['Trend'] != "down"):
-            send_to_pineconnector(command, symbol, risk)
-            update_airtable_record(record['id'], "open", command)
+        if command == "buy":
+            if record['fields']['Trend'] == "down" and record['fields']['State'] != "open":
+                app.logger.debug(f"Ignoring buy command for {symbol} because trend is down and state is not open")
+            else:
+                send_to_pineconnector(command, symbol, risk)
+                update_airtable_record(record['id'], "open", command)
         elif command == "sell":
             send_to_pineconnector("closelong", symbol, risk)
             update_airtable_record(record['id'], "closed", command)
         elif command in ["up", "down"]:
             update_airtable_trend(symbol, command)
     return '', 200
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=80)
