@@ -46,7 +46,7 @@ def webhook():
 
     risk = float(risk[0]) if risk else 0.2
     app.logger.debug(f"Parsed command: {command}, symbol: {symbol}, risk: {risk}")
-
+    
     record = get_matching_record(symbol)
     if record:
         app.logger.debug(f"Found record for {symbol} with state {record['fields']['State']} and trend {record['fields']['Trend']}")
