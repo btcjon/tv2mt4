@@ -21,7 +21,7 @@ def update_airtable_record(record_id, state, last_command):
 
 def update_airtable_trend(symbol, trend):
     record = get_matching_record(symbol)
-    app.logger.debug(f"Retrieved record: {record}")
+    app.logger.debug(f"Updating trend for {symbol} to {trend}")
     if record:
         response = airtable.update(record['id'], {'Trend': trend})
         app.logger.debug(f"Airtable update response: {response}")
@@ -36,6 +36,7 @@ def webhook():
     data = request.data.decode('utf-8')
     app.logger.debug(f"Received webhook data: {data}")
     command, symbol, *risk = data.split()
+    app.logger.debug(f"Parsed command: {command}")
     risk = float(risk[0]) if risk else 0.2
     print(f"Received {command} command for {symbol} with risk {risk}")
     record = get_matching_record(symbol)
