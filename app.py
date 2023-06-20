@@ -2,8 +2,10 @@ from flask import Flask, request
 from airtable import Airtable
 import requests
 import config
+import logging
 
 app = Flask(__name__)
+app.logger.setLevel(logging.DEBUG)
 
 airtable = Airtable(config.AIRTABLE_BASE_ID, config.AIRTABLE_TABLE_NAME, api_key=config.AIRTABLE_API_KEY)
 
