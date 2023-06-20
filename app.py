@@ -35,13 +35,21 @@ def send_to_pineconnector(action, symbol, risk):
 def webhook():
     data = request.data.decode('utf-8')
     app.logger.debug(f"Received webhook data: {data}")
-    command, symbol, *risk = data.split()
-    app.logger.debug(f"Parsed command: {command}")
+    parts = data.split()
+    
+    if parts[0] in ["up", "down"]:
+        # This is a trend update webhook
+        command, symbol, *risk = parts
+    else:
+        # This is a buy or sell webhook
+        symbol, command, *risk = parts
+
     risk = float(risk[0]) if risk else 0.2
-    print(f"Received {command} command for {symbol} with risk {risk}")
+    app.logger.debug(f"Parsed command: {command}, symbol: {symbol}, risk: {risk}")
+
     record = get_matching_record(symbol)
     if record:
-        print(f"Found record for {symbol} with state {record['fields']['State']} and trend {record['fields']['Trend']}")
+        app.logger.debug(f"Found record for {symbol} with state {record['fields']['State']} and trend {record['fields']['Trend']}")
         if command == "buy" and (record['fields']['State'] != "closed" or record['fields']['Trend'] != "down"):
             send_to_pineconnector(command, symbol, risk)
             update_airtable_record(record['id'], "open", command)
