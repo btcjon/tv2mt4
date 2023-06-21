@@ -44,7 +44,7 @@ def webhook():
         # This is a buy or sell webhook
         command, symbol, *risk = parts
 
-    risk = float(risk[0]) if risk else 0.45
+    risk = float(risk[0]) if risk else 0.1
     app.logger.debug(f"Parsed command: {command}, symbol: {symbol}, risk: {risk}")
 
     record = get_matching_record(symbol)
