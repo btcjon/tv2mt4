@@ -44,8 +44,14 @@ def webhook():
         # This is a buy or sell webhook
         command, symbol, *risk = parts
 
-    risk = float(risk[0]) if risk else 0.45
-    app.logger.debug(f"Parsed command: {command}, symbol: {symbol}, risk: {risk}")
+    risk = 0.45  # default risk
+    for part in parts:
+        if part.startswith("risk="):
+            try:
+                risk = float(part.split("=")[1])
+            except (IndexError, ValueError):
+                app.logger.debug(f"Failed to parse risk from part: {part}")
+
 
     record = get_matching_record(symbol)
     if record:
