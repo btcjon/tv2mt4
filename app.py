@@ -26,6 +26,24 @@ def update_airtable_trend(symbol, trend):
         response = airtable.update(record['id'], {'Trend': trend})
         app.logger.debug(f"Airtable update response: {response}")
 
+def update_airtable_count(record_id, command):
+    record = airtable.get(record_id)
+    count = record['fields'].get('Count', '-')
+    app.logger.debug(f"Current count for record {record_id}: {count}")
+    if command == 'sell':
+        new_count = '-'
+    elif command == 'buy':
+        if count == '-':
+            new_count = '0'
+        else:
+            new_count = str(int(count) + 1)
+    else:
+        return
+    app.logger.debug(f"Updating count for record {record_id} to {new_count}")
+    response = airtable.update(record_id, {'Count': new_count})
+    app.logger.debug(f"Airtable update response: {response}")
+
+
 def send_to_pineconnector(action, symbol, risk):
     data = f"{config.LICENSE_ID},{action},{symbol},risk={risk}"
     response = requests.post(config.PINECONNECTOR_WEBHOOK_URL, data=data)
@@ -52,7 +70,6 @@ def webhook():
             except (IndexError, ValueError):
                 app.logger.debug(f"Failed to parse risk from part: {part}")
 
-
     record = get_matching_record(symbol)
     if record:
         app.logger.debug(f"Found record for {symbol} with state {record['fields']['State']} and trend {record['fields']['Trend']}")
@@ -62,14 +79,14 @@ def webhook():
             else:
                 send_to_pineconnector(command, symbol, risk)
                 update_airtable_record(record['id'], "open", command)
-
+                update_airtable_count(record['id'], command)
         elif command == "sell":
             send_to_pineconnector("closelong", symbol, risk)
             update_airtable_record(record['id'], "closed", command)
+            update_airtable_count(record['id'], command)
         elif command in ["up", "down"]:
             update_airtable_trend(symbol, command)
     return '', 200
-
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=80)
