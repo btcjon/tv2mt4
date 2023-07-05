@@ -62,7 +62,7 @@ def webhook():
         # This is a buy or sell webhook
         command, symbol, *risk = parts
 
-    risk = 0.0015  # default risk
+    risk = 0.002  # default risk
     for part in parts:
         if part.startswith("risk="):
             try:
