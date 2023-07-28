@@ -3,6 +3,7 @@ from airtable import Airtable
 import requests
 import config
 import logging
+import os
 
 app = Flask(__name__)
 handler = logging.StreamHandler()
@@ -51,8 +52,7 @@ def webhook():
     #            risk = float(part.split("=")[1])
     #        except (IndexError, ValueError):
     #            app.logger.debug(f"Failed to parse risk from part: {part}")
-
-
+    
     #record = get_matching_record(symbol)
     #if record:
     #    app.logger.debug(f"Found record for {symbol} with state {record['fields']['State']} and trend {record['fields']['Trend']}")
@@ -71,6 +71,8 @@ def webhook():
     return '', 200
 
 
-#if __name__ == '__main__':
-#    app.run(host='0.0.0.0', port=80)
+if __name__ == '__main__':
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
+
 
