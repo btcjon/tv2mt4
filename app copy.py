@@ -12,6 +12,27 @@ app.logger.setLevel(logging.DEBUG)
 
 airtable = Airtable(config.AIRTABLE_BASE_ID, config.AIRTABLE_TABLE_NAME, api_key=config.AIRTABLE_API_KEY)
 
+def parse_alert(alert):
+    alert_details = {"is_bearish": False, "symbol": None}
+    parts = alert.split(" ")
+
+    if parts[0].lower() == "bearish":
+        alert_details["is_bearish"] = True
+        alert_details["symbol"] = parts[-1]
+
+    return alert_details
+
+def generate_pineconnector_command(symbol):
+    license_id = "6700960415957"
+    command = "bearish"
+    risk = "risk=0.0005"
+    tp = "tp=0.05"
+    sl = "sl=0.05"
+
+    pineconnector_command = f"{license_id},{command},{symbol},{risk},{tp},{sl}"
+    
+    return pineconnector_command
+
 def get_matching_record(symbol):
     records = airtable.get_all(formula=f"{{Symbol}} = '{symbol}'")
     return records[0] if records else None
@@ -43,7 +64,6 @@ def update_airtable_count(record_id, command):
     response = airtable.update(record_id, {'Count': new_count})
     app.logger.debug(f"Airtable update response: {response}")
 
-
 def send_to_pineconnector(action, symbol, risk):
     data = f"{config.LICENSE_ID},{action},{symbol},risk={risk}"
     response = requests.post(config.PINECONNECTOR_WEBHOOK_URL, data=data)
@@ -53,39 +73,17 @@ def send_to_pineconnector(action, symbol, risk):
 def webhook():
     data = request.data.decode('utf-8')
     app.logger.debug(f"Received webhook data: {data}")
-    parts = data.split()
-    
-    if parts[0] in ["up", "down"]:
-        # This is a trend update webhook
-        command, symbol, *risk = parts
+
+    alert_details = parse_alert(data)
+    if alert_details["is_bearish"]:
+        pineconnector_command = generate_pineconnector_command(alert_details["symbol"])
+        response = requests.post(config.PINECONNECTOR_WEBHOOK_URL, data=pineconnector_command)
+        print(f"Sent command to Pineconnector, response: {response.text}")
     else:
-        # This is a buy or sell webhook
+        parts = data.split()
         command, symbol, *risk = parts
+        # Rest of the existing logic...
 
-    risk = 0.002  # default risk
-    for part in parts:
-        if part.startswith("risk="):
-            try:
-                risk = float(part.split("=")[1])
-            except (IndexError, ValueError):
-                app.logger.debug(f"Failed to parse risk from part: {part}")
-
-    record = get_matching_record(symbol)
-    if record:
-        app.logger.debug(f"Found record for {symbol} with state {record['fields']['State']} and trend {record['fields']['Trend']}")
-        if command == "buy":
-            if record['fields']['Trend'] == "down" and record['fields']['State'] == "closed":
-                app.logger.debug(f"Ignoring buy command for {symbol} because trend is down and state is closed")
-            else:
-                send_to_pineconnector(command, symbol, risk)
-                update_airtable_record(record['id'], "open", command)
-                update_airtable_count(record['id'], command)
-        elif command == "sell":
-            send_to_pineconnector("closelong", symbol, risk)
-            update_airtable_record(record['id'], "closed", command)
-            update_airtable_count(record['id'], command)
-        elif command in ["up", "down"]:
-            update_airtable_trend(symbol, command)
     return '', 200
 
 if __name__ == '__main__':
