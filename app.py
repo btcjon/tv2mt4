@@ -26,8 +26,8 @@ def generate_pineconnector_command(symbol):
     license_id = "6700960415957"
     command = "bearish"
     risk = "risk=0.0005"
-    tp = "tp=0.04"
-    sl = "sl=0.04"
+    tp = "tp=0.05"
+    sl = "sl=0.05"
 
     pineconnector_command = f"{license_id},{command},{symbol},{risk},{tp},{sl}"
     
