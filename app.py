@@ -106,7 +106,7 @@ def webhook():
                 send_to_pineconnector("closelong", symbol, risk)
                 update_airtable_record(record['id'], "closed", command)
                 update_airtable_count(record['id'], command)
-                elif command in ["up", "down", "flat"]:
+            elif command in ["up", "down", "flat"]:
                 update_airtable_trend(symbol, command)
     return '', 200
 
