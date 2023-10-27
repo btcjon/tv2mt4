@@ -27,6 +27,11 @@ def generate_pineconnector_command(command, symbol):
     risk = "risk=0.0005"
     tp = "tp=0.05"
     sl = "sl=0.2"
+    comment = 'comment="lux2"'
+
+    pineconnector_command = f"{license_id},{command},{symbol},{risk},{tp},{sl},{comment}"
+    
+    return pineconnector_command
 
     pineconnector_command = f"{license_id},{command},{symbol},{risk},{tp},{sl}"
     
