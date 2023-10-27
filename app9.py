@@ -93,9 +93,7 @@ def webhook():
         record = get_matching_record(symbol)
         if record:
             app.logger.debug(f"Found record for {symbol} with state {record['fields']['State']} and trend {record['fields']['Trend']}")
-            if record['fields']['Trend'] == "flat":
-                app.logger.debug(f"Ignoring all commands for {symbol} because trend is flat")
-            elif command == "buy":
+            if command == "buy":
                 if record['fields']['Trend'] == "down" and record['fields']['State'] == "closed":
                     app.logger.debug(f"Ignoring buy command for {symbol} because trend is down and state is closed")
                 else:
@@ -106,7 +104,7 @@ def webhook():
                 send_to_pineconnector("closelong", symbol, risk)
                 update_airtable_record(record['id'], "closed", command)
                 update_airtable_count(record['id'], command)
-                elif command in ["up", "down", "flat"]:
+            elif command in ["up", "down"]:
                 update_airtable_trend(symbol, command)
     return '', 200
 
