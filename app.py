@@ -24,9 +24,9 @@ def parse_alert(alert):
 
 def generate_pineconnector_command(command, symbol):
     license_id = "6700960415957"
-    risk = "risk=0.0005"
-    tp = "tp=0.05"
-    sl = "sl=0.2"
+    risk = "risk=0.01"
+    tp = "tp=0.1"
+    sl = "sl=0.1"
     comment = 'comment="lux2"'
 
     pineconnector_command = f"{license_id},{command},{symbol},{risk},{tp},{sl},{comment}"
