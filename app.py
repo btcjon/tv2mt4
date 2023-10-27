@@ -22,9 +22,8 @@ def parse_alert(alert):
 
     return alert_details
 
-def generate_pineconnector_command(symbol):
+def generate_pineconnector_command(command, symbol):
     license_id = "6700960415957"
-    command = "bearish"
     risk = "risk=0.0005"
     tp = "tp=0.05"
     sl = "sl=0.2"
@@ -47,67 +46,40 @@ def update_airtable_trend(symbol, trend):
         response = airtable.update(record['id'], {'Trend': trend})
         app.logger.debug(f"Airtable update response: {response}")
 
-def update_airtable_count(record_id, command):
-    record = airtable.get(record_id)
-    count = record['fields'].get('Count', '-')
-    app.logger.debug(f"Current count for record {record_id}: {count}")
-    if command == 'sell':
-        new_count = '-'
-    elif command == 'buy':
-        if count == '-':
-            new_count = '0'
-        else:
-            new_count = str(int(count) + 1)
-    else:
-        return
-    app.logger.debug(f"Updating count for record {record_id} to {new_count}")
-    response = airtable.update(record_id, {'Count': new_count})
-    app.logger.debug(f"Airtable update response: {response}")
-
-def send_to_pineconnector(action, symbol, risk):
-    data = f"{config.LICENSE_ID},{action},{symbol},risk={risk}"
-    response = requests.post(config.PINECONNECTOR_WEBHOOK_URL, data=data)
-    print(f"Sent {action} command for {symbol} to Pineconnector, response: {response.text}")
-
 @app.route('/webhook', methods=['POST'])
 def webhook():
     data = request.data.decode('utf-8')
     app.logger.debug(f"Received webhook data: {data}")
     parts = data.split()
     
-    alert_details = parse_alert(data)
-    if alert_details["is_bearish"]:
-        pineconnector_command = generate_pineconnector_command(alert_details["symbol"])
-        response = requests.post(config.PINECONNECTOR_WEBHOOK_URL, data=pineconnector_command)
-        print(f"Sent command to Pineconnector, response: {response.text}")
-    else:
-        command, symbol, *risk_parts = parts
-        risk = 0.002  # default risk
-        for part in risk_parts:
-            if part.startswith("risk="):
-                try:
-                    risk = float(part.split("=")[1])
-                except (IndexError, ValueError):
-                    app.logger.debug(f"Failed to parse risk from part: {part}")
+    command, symbol, *risk_parts = parts
+    risk = 0.002  # default risk
+    for part in risk_parts:
+        if part.startswith("risk="):
+            try:
+                risk = float(part.split("=")[1])
+            except (IndexError, ValueError):
+                app.logger.debug(f"Failed to parse risk from part: {part}")
 
-        record = get_matching_record(symbol)
-        if record:
-            app.logger.debug(f"Found record for {symbol} with state {record['fields']['State']} and trend {record['fields']['Trend']}")
-            if record['fields']['Trend'] == "flat":
-                app.logger.debug(f"Ignoring all commands for {symbol} because trend is flat")
-            elif command == "buy":
-                if record['fields']['Trend'] == "down" and record['fields']['State'] == "closed":
-                    app.logger.debug(f"Ignoring buy command for {symbol} because trend is down and state is closed")
-                else:
-                    send_to_pineconnector(command, symbol, risk)
-                    update_airtable_record(record['id'], "open", command)
-                    update_airtable_count(record['id'], command)
-            elif command == "sell":
-                send_to_pineconnector("closelong", symbol, risk)
+    record = get_matching_record(symbol)
+    if record:
+        app.logger.debug(f"Found record for {symbol} with state {record['fields']['State']} and trend {record['fields']['Trend']}")
+        if record['fields']['Trend'] == "flat":
+            app.logger.debug(f"Ignoring all commands for {symbol} because trend is flat")
+        elif command == "long":
+            if record['fields']['Trend'] == "up":
+                pineconnector_command = generate_pineconnector_command(command, symbol)
+                response = requests.post(config.PINECONNECTOR_WEBHOOK_URL, data=pineconnector_command)
+                print(f"Sent command to Pineconnector, response: {response.text}")
+                update_airtable_record(record['id'], "open", command)
+        elif command == "short":
+            if record['fields']['Trend'] == "down":
+                pineconnector_command = generate_pineconnector_command(command, symbol)
+                response = requests.post(config.PINECONNECTOR_WEBHOOK_URL, data=pineconnector_command)
+                print(f"Sent command to Pineconnector, response: {response.text}")
                 update_airtable_record(record['id'], "closed", command)
-                update_airtable_count(record['id'], command)
-            elif command in ["up", "down", "flat"]:
-                update_airtable_trend(symbol, command)
+        elif command in ["up", "down", "flat"]:
+            update_airtable_trend(symbol, command)
     return '', 200
 
 if __name__ == '__main__':
