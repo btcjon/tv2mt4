@@ -69,22 +69,19 @@ def webhook():
     record = get_matching_record(symbol)
     if record:
         app.logger.debug(f"Found record for {symbol} with state {record['fields']['State']} and trend {record['fields']['Trend']}")
-        if record['fields']['Trend'] == "flat":
-            app.logger.debug(f"Ignoring all commands for {symbol} because trend is flat")
-        elif command == "long":
-            if record['fields']['Trend'] == "up":
+        if command in ["up", "down", "flat"]:
+            update_airtable_trend(symbol, command)
+        elif record['fields']['Trend'] != "flat":
+            if command == "long" and record['fields']['Trend'] == "up":
                 pineconnector_command = generate_pineconnector_command(command, symbol)
                 response = requests.post(config.PINECONNECTOR_WEBHOOK_URL, data=pineconnector_command)
                 print(f"Sent command to Pineconnector, response: {response.text}")
                 update_airtable_record(record['id'], "open", command)
-        elif command == "short":
-            if record['fields']['Trend'] == "down":
+            elif command == "short" and record['fields']['Trend'] == "down":
                 pineconnector_command = generate_pineconnector_command(command, symbol)
                 response = requests.post(config.PINECONNECTOR_WEBHOOK_URL, data=pineconnector_command)
                 print(f"Sent command to Pineconnector, response: {response.text}")
                 update_airtable_record(record['id'], "closed", command)
-        elif command in ["up", "down", "flat"]:
-            update_airtable_trend(symbol, command)
     return '', 200
 
 if __name__ == '__main__':
