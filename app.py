@@ -86,4 +86,4 @@ def send_pineconnector_command(license_id, command, symbol, risk, tp, sl, commen
         app.logger.error(f"Error sending command to Pineconnector: {e}")
 
 if __name__ == '__main__':
-    app.run(host
+    app.run(host='0.0.0.0', port=8080, debug=True)
