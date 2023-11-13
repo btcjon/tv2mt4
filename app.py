@@ -25,7 +25,7 @@ def parse_alert(alert):
 def generate_pineconnector_command(license_id, command, symbol, risk=None, tp=None, sl=None, comment=None):
     pineconnector_command = f"{license_id},{command},{symbol}"
     if risk:
-        pineconnector_command += f",risk={risk}"
+        pineconnector_command += f",{risk}"
     if tp:
         pineconnector_command += f",tp={tp}"
     if sl:
