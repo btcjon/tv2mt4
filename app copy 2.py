@@ -22,16 +22,19 @@ def parse_alert(alert):
 
     return alert_details
 
-def generate_pineconnector_command(license_id, command, symbol, risk=None, tp=None, sl=None, comment=None):
-    pineconnector_command = f"{license_id},{command},{symbol}"
-    if risk:
-        pineconnector_command += f",{risk}"
-    if tp:
-        pineconnector_command += f",{tp}"
-    if sl:
-        pineconnector_command += f",{sl}"
-    if comment:
-        pineconnector_command += f",{comment}"
+def generate_pineconnector_command(command, symbol):
+    license_id = "6700960415957"
+    risk = "risk=0.01"
+    tp = "tp=0.1"
+    sl = "sl=0.1"
+    comment = 'comment="L1"'
+
+    pineconnector_command = f"{license_id},{command},{symbol},{risk},{tp},{sl},{comment}"
+    
+    return pineconnector_command
+
+    pineconnector_command = f"{license_id},{command},{symbol},{risk},{tp},{sl}"
+    
     return pineconnector_command
 
 def get_matching_record(symbol):
@@ -52,26 +55,33 @@ def update_airtable_trend(symbol, trend):
 def webhook():
     data = request.data.decode('utf-8')
     app.logger.debug(f"Received webhook data: {data}")
-    parts = data.split(',')
-
-    license_id = parts[0]
-    command = parts[1]
-    symbol = parts[2]
-    risk = parts[3] if len(parts) > 3 else None
-    tp = parts[4] if len(parts) > 4 else None
-    sl = parts[5] if len(parts) > 5 else None
-    comment = parts[6] if len(parts) > 6 else None
+    parts = data.split()
+    
+    command, symbol, *risk_parts = parts
+    risk = 0.002  # default risk
+    for part in risk_parts:
+        if part.startswith("risk="):
+            try:
+                risk = float(part.split("=")[1])
+            except (IndexError, ValueError):
+                app.logger.debug(f"Failed to parse risk from part: {part}")
 
     record = get_matching_record(symbol)
     if record:
         app.logger.debug(f"Found record for {symbol} with state {record['fields']['State']} and trend {record['fields']['Trend']}")
         if command in ["up", "down", "flat"]:
             update_airtable_trend(symbol, command)
-        elif (command == "long" and record['fields']['Trend'] == "up") or (command == "short" and record['fields']['Trend'] == "down"):
-            pineconnector_command = generate_pineconnector_command(license_id, command, symbol, risk, tp, sl, comment)
-            response = requests.post(config.PINECONNECTOR_WEBHOOK_URL, data=pineconnector_command)
-            print(f"Sent command to Pineconnector, response: {response.text}")
-            update_airtable_record(record['id'], "open" if command == "long" else "closed", command)
+        elif record['fields']['Trend'] != "flat":
+            if command == "long" and record['fields']['Trend'] == "up":
+                pineconnector_command = generate_pineconnector_command(command, symbol)
+                response = requests.post(config.PINECONNECTOR_WEBHOOK_URL, data=pineconnector_command)
+                print(f"Sent command to Pineconnector, response: {response.text}")
+                update_airtable_record(record['id'], "open", command)
+            elif command == "short" and record['fields']['Trend'] == "down":
+                pineconnector_command = generate_pineconnector_command(command, symbol)
+                response = requests.post(config.PINECONNECTOR_WEBHOOK_URL, data=pineconnector_command)
+                print(f"Sent command to Pineconnector, response: {response.text}")
+                update_airtable_record(record['id'], "closed", command)
     return '', 200
 
 if __name__ == '__main__':
