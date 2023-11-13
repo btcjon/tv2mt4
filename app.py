@@ -38,9 +38,6 @@ def get_matching_record(symbol):
     records = airtable.get_all(formula=f"{{Symbol}} = '{symbol}'")
     return records[0] if records else None
 
-def update_airtable_record(record_id, state, last_command):
-    airtable.update(record_id, {'State': state, 'Last Command': last_command})
-
 def update_airtable_trend(symbol, trend):
     record = get_matching_record(symbol)
     app.logger.debug(f"Updating trend for {symbol} to {trend}")
@@ -70,16 +67,18 @@ def webhook():
         elif (command == "long" and record['fields']['Trend'] == "up") or (command == "short" and record['fields']['Trend'] == "down"):
             if config.CHECK_STATE:
                 if record['fields']['State'] == "closed":
-                    send_pineconnector_command(license_id, command, symbol, risk, tp, sl, comment, record)
+                    send_pineconnector_command(license_id, command, symbol, risk, tp, sl, comment)
             else:
-                send_pineconnector_command(license_id, command, symbol, risk, tp, sl, comment, record)
+                send_pineconnector_command(license_id, command, symbol, risk, tp, sl, comment)
     return '', 200
 
-def send_pineconnector_command(license_id, command, symbol, risk, tp, sl, comment, record):
-    pineconnector_command = generate_pineconnector_command(license_id, command, symbol, risk, tp, sl, comment)
-    response = requests.post(config.PINECONNECTOR_WEBHOOK_URL, data=pineconnector_command)
-    print(f"Sent command to Pineconnector, response: {response.text}")
-    update_airtable_record(record['id'], "open" if command == "long" else "closed", command)
+def send_pineconnector_command(license_id, command, symbol, risk, tp, sl, comment):
+    try:
+        pineconnector_command = generate_pineconnector_command(license_id, command, symbol, risk, tp, sl, comment)
+        response = requests.post(config.PINECONNECTOR_WEBHOOK_URL, data=pineconnector_command)
+        print(f"Sent command to Pineconnector, response: {response.text}")
+    except Exception as e:
+        app.logger.error(f"Error sending command to Pineconnector: {e}")
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=80)
