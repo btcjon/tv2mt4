@@ -25,13 +25,13 @@ def parse_alert(alert):
 def generate_pineconnector_command(license_id, command, symbol, risk=None, tp=None, sl=None, comment=None):
     pineconnector_command = f"{license_id},{command},{symbol}"
     if risk:
-        pineconnector_command += f",{risk}"
+        pineconnector_command += f",risk={risk}"
     if tp:
-        pineconnector_command += f",{tp}"
+        pineconnector_command += f",tp={tp}"
     if sl:
-        pineconnector_command += f",{sl}"
+        pineconnector_command += f",sl={sl}"
     if comment:
-        pineconnector_command += f",{comment}"
+        pineconnector_command += f",comment={comment}"
     return pineconnector_command
 
 def get_matching_record(symbol):
