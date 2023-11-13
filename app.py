@@ -52,17 +52,21 @@ def webhook():
     app.logger.debug(f"Received webhook data: {data}")
     parts = data.split(',')
 
-    if len(parts) < 3:
+    if len(parts) < 2:
         app.logger.error(f"Invalid webhook data: {data}")
         return '', 400
 
-    license_id = parts[0]
-    command = parts[1]
-    symbol = parts[2]
-    risk = parts[3] if len(parts) > 3 else None
-    tp = parts[4] if len(parts) > 4 else None
-    sl = parts[5] if len(parts) > 5 else None
-    comment = parts[6] if len(parts) > 6 else None
+    if len(parts) == 2:
+        command, symbol = parts
+        license_id = risk = tp = sl = comment = None
+    else:
+        license_id = parts[0]
+        command = parts[1]
+        symbol = parts[2]
+        risk = parts[3] if len(parts) > 3 else None
+        tp = parts[4] if len(parts) > 4 else None
+        sl = parts[5] if len(parts) > 5 else None
+        comment = parts[6] if len(parts) > 6 else None
 
     record = get_matching_record(symbol)
     if record:
