@@ -52,6 +52,10 @@ def webhook():
     app.logger.debug(f"Received webhook data: {data}")
     parts = data.split(',')
 
+    if len(parts) < 3:
+        app.logger.error(f"Invalid webhook data: {data}")
+        return '', 400
+
     license_id = parts[0]
     command = parts[1]
     symbol = parts[2]
@@ -77,9 +81,9 @@ def send_pineconnector_command(license_id, command, symbol, risk, tp, sl, commen
     try:
         pineconnector_command = generate_pineconnector_command(license_id, command, symbol, risk, tp, sl, comment)
         response = requests.post(config.PINECONNECTOR_WEBHOOK_URL, data=pineconnector_command)
-        print(f"Sent command to Pineconnector, response: {response.text}")
+        app.logger.debug(f"Sent command to Pineconnector: {pineconnector_command}, response: {response.text}")
     except Exception as e:
         app.logger.error(f"Error sending command to Pineconnector: {e}")
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=80)
+    app.run(host
