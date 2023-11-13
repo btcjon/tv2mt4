@@ -56,9 +56,9 @@ def webhook():
         app.logger.error(f"Invalid webhook data: {data}")
         return '', 400
 
+    license_id = risk = tp = sl = comment = None
     if len(parts) == 2:
         command, symbol = parts
-        license_id = risk = tp = sl = comment = None
     else:
         license_id = parts[0]
         command = parts[1]
