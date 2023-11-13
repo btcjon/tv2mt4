@@ -68,11 +68,18 @@ def webhook():
         if command in ["up", "down", "flat"]:
             update_airtable_trend(symbol, command)
         elif (command == "long" and record['fields']['Trend'] == "up") or (command == "short" and record['fields']['Trend'] == "down"):
-            pineconnector_command = generate_pineconnector_command(license_id, command, symbol, risk, tp, sl, comment)
-            response = requests.post(config.PINECONNECTOR_WEBHOOK_URL, data=pineconnector_command)
-            print(f"Sent command to Pineconnector, response: {response.text}")
-            update_airtable_record(record['id'], "open" if command == "long" else "closed", command)
+            if config.CHECK_STATE:
+                if record['fields']['State'] == "closed":
+                    send_pineconnector_command(license_id, command, symbol, risk, tp, sl, comment, record)
+            else:
+                send_pineconnector_command(license_id, command, symbol, risk, tp, sl, comment, record)
     return '', 200
+
+def send_pineconnector_command(license_id, command, symbol, risk, tp, sl, comment, record):
+    pineconnector_command = generate_pineconnector_command(license_id, command, symbol, risk, tp, sl, comment)
+    response = requests.post(config.PINECONNECTOR_WEBHOOK_URL, data=pineconnector_command)
+    print(f"Sent command to Pineconnector, response: {response.text}")
+    update_airtable_record(record['id'], "open" if command == "long" else "closed", command)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=80)
