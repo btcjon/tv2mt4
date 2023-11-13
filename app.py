@@ -35,7 +35,8 @@ def generate_pineconnector_command(license_id, command, symbol, risk=None, tp=No
     return pineconnector_command
 
 def get_matching_record(symbol):
-    records = airtable.get_all(formula=f"{{Symbol}} = '{symbol}'")
+    symbol_without_pro = symbol.replace('.PRO', '')
+    records = airtable.get_all(formula=f"{{Symbol}} = '{symbol_without_pro}'")
     return records[0] if records else None
 
 def update_airtable_trend(symbol, trend):
