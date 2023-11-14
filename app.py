@@ -3,6 +3,7 @@ from airtable import Airtable
 import requests
 import config
 import logging
+from datetime import datetime, time
 
 app = Flask(__name__)
 handler = logging.StreamHandler()
@@ -82,6 +83,19 @@ def webhook():
     return '', 200
 
 def send_pineconnector_command(license_id, command, symbol, risk, tp, sl, comment):
+    # Define the start and end of the time range in UTC
+    start_time = time(20, 55)  # 8:55 PM UTC
+    end_time = time(22, 15)  # 10:15 PM UTC
+
+    # Get the current time
+    now = datetime.utcnow().time()
+
+    # Check if the current time falls within the specified range
+    if start_time <= now <= end_time:
+        app.logger.debug(f"Command not sent to Pineconnector due to time filter: {start_time} - {end_time}")
+        return
+
+    # If the current time is outside the specified range, proceed with sending the command
     try:
         pineconnector_command = generate_pineconnector_command(license_id, command, symbol, risk, tp, sl, comment)
         response = requests.post(config.PINECONNECTOR_WEBHOOK_URL, data=pineconnector_command)
