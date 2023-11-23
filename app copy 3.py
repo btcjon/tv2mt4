@@ -47,13 +47,6 @@ def update_airtable_trend(symbol, trend):
         response = airtable.update(record['id'], {'Trend': trend})
         app.logger.debug(f"Airtable update response: {response}")
 
-def update_airtable_snr(symbol, snr):
-    record = get_matching_record(symbol)
-    app.logger.debug(f"Updating SnR for {symbol} to {snr}")
-    if record:
-        response = airtable.update(record['id'], {'SnR': snr})
-        app.logger.debug(f"Airtable update response: {response}")
-
 @app.route('/webhook', methods=['POST'])
 def webhook():
     data = request.data.decode('utf-8')
@@ -63,20 +56,6 @@ def webhook():
     if len(parts) < 2:
         app.logger.error(f"Invalid webhook data: {data}")
         return '', 400
-
-    message = parts[0]
-
-    if "Zone Found" in message:
-        pass
-    elif "enters" in message and "Support" in message:
-        symbol = message.split(' - ')[0]
-        update_airtable_snr(symbol, "Support")
-    elif "enters" in message and "Resistance" in message:
-        symbol = message.split(' - ')[0]
-        update_airtable_snr(symbol, "Resistance")
-    elif "is breaking" in message:
-        symbol = message.split(' - ')[0]
-        update_airtable_snr(symbol, "-")
 
     license_id = risk = tp = sl = comment = None
     if len(parts) == 2:
@@ -104,22 +83,25 @@ def webhook():
     return '', 200
 
 def send_pineconnector_command(license_id, command, symbol, risk, tp, sl, comment):
-        start_time = time(20, 0, 0)
-        end_time = time(5, 0, 0)
-        current_time = datetime.utcnow().time()
+    # Define the start and end of the time range in UTC
+    start_time = time(20, 55)  # 8:55 PM UTC
+    end_time = time(22, 15)  # 10:15 PM UTC
 
-        if start_time < end_time:
-            if start_time <= current_time <= end_time:
-                pineconnector_command = generate_pineconnector_command(license_id, command, symbol, risk, tp, sl, comment)
-                app.logger.debug(f"Sending PineConnector command: {pineconnector_command}")
-                response = requests.get(f"{config.PINECONNECTOR_URL}/execute?command={pineconnector_command}")
-                app.logger.debug(f"PineConnector response: {response.text}")
-        else:
-            if start_time <= current_time or current_time <= end_time:
-                pineconnector_command = generate_pineconnector_command(license_id, command, symbol, risk, tp, sl, comment)
-                app.logger.debug(f"Sending PineConnector command: {pineconnector_command}")
-                response = requests.get(f"{config.PINECONNECTOR_URL}/execute?command={pineconnector_command}")
-                app.logger.debug(f"PineConnector response: {response.text}")
+    # Get the current time
+    now = datetime.utcnow().time()
+
+    # Check if the current time falls within the specified range
+    if start_time <= now <= end_time:
+        app.logger.debug(f"Command not sent to Pineconnector due to time filter: {start_time} - {end_time}")
+        return
+
+    # If the current time is outside the specified range, proceed with sending the command
+    try:
+        pineconnector_command = generate_pineconnector_command(license_id, command, symbol, risk, tp, sl, comment)
+        response = requests.post(config.PINECONNECTOR_WEBHOOK_URL, data=pineconnector_command)
+        app.logger.debug(f"Sent command to Pineconnector: {pineconnector_command}, response: {response.text}")
+    except Exception as e:
+        app.logger.error(f"Error sending command to Pineconnector: {e}")
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080, debug=True)
