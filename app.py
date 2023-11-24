@@ -32,7 +32,7 @@ def generate_pineconnector_command(license_id, command, symbol, risk=None, tp=No
     if sl:
         pineconnector_command += f",sl={sl}"
     if comment:
-        pineconnector_command += f",comment={comment}"
+        pineconnector_command += f",comment=\"{comment}\""
     return pineconnector_command.replace(",tp=None", "").replace(",sl=None", "")
 
 
