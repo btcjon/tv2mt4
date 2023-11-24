@@ -123,8 +123,15 @@ def send_pineconnector_command(license_id, command, symbol, risk, tp, sl, commen
     if record:
         state_long = record['fields'].get('State Long', '')
         state_short = record['fields'].get('State Short', '')
+        snr = record['fields'].get('SnR', '')
         if 'BB' in state_long or 'BB' in state_short:
             app.logger.debug(f"Not sending PineConnector command for {symbol} because 'BB' is in State Long or State Short")
+            return
+        if snr == 'Support' and command == 'short' and state_short == 'closed':
+            app.logger.debug(f"Not sending PineConnector command for {symbol} because SnR is Support and the command is a new short order")
+            return
+        if snr == 'Resistance' and command == 'long' and state_long == 'closed':
+            app.logger.debug(f"Not sending PineConnector command for {symbol} because SnR is Resistance and the command is a new long order")
             return
         
         start_time = time(20, 0, 0)
