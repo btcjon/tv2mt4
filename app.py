@@ -33,7 +33,8 @@ def generate_pineconnector_command(license_id, command, symbol, risk=None, tp=No
         pineconnector_command += f",sl={sl}"
     if comment:
         pineconnector_command += f",comment={comment}"
-    return pineconnector_command
+    return pineconnector_command.replace(",tp=None", "").replace(",sl=None", "")
+
 
 def get_matching_record(symbol):
     symbol_without_pro = symbol.replace('.PRO', '')
