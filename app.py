@@ -103,7 +103,6 @@ def webhook():
             tp = parts[4] if len(parts) > 4 else None
             sl = parts[5] if len(parts) > 5 else None
             comment = parts[6] if len(parts) > 6 else None
-
         app.logger.debug(f"Parsed command: {command}, symbol: {symbol}, risk: {risk}, tp: {tp}, sl: {sl}, comment: {comment}")
 
         record = get_matching_record(symbol)
