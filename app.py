@@ -106,6 +106,7 @@ def webhook():
 
         record = get_matching_record(symbol)
         if record:
+            state_field = 'State Long' if command == 'long' else 'State Short'  # Define state_field here
             state = record['fields'].get(state_field)
             trend = record['fields'].get('Trend')
 
@@ -115,8 +116,6 @@ def webhook():
                 if config.CHECK_STATE:
                     if state == "closed":
                         send_pineconnector_command(license_id, command, symbol, risk, tp, sl, comment)
-                else:
-                    send_pineconnector_command(license_id, command, symbol, risk, tp, sl, comment)
     return '', 200
 
 def send_pineconnector_command(license_id, command, symbol, risk, tp, sl, comment):
