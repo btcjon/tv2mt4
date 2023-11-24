@@ -106,13 +106,12 @@ def webhook():
 
         record = get_matching_record(symbol)
         if record:
-            state_field = 'State Long' if command == 'long' else 'State Short'
             state = record['fields'].get(state_field)
             trend = record['fields'].get('Trend')
-            app.logger.debug(f"Found record for {symbol} with {state_field} {state} and trend {trend}")
+
             if command in ["up", "down", "flat"]:
                 update_airtable_trend(symbol, command)
-            elif (command == "long" and record['fields']['Trend'] == "up") or (command == "short" and record['fields']['Trend'] == "down"):
+            elif (command == "long" and trend == "up") or (command == "short" and trend == "down"):
                 if config.CHECK_STATE:
                     if state == "closed":
                         send_pineconnector_command(license_id, command, symbol, risk, tp, sl, comment)
@@ -121,54 +120,14 @@ def webhook():
     return '', 200
 
 def send_pineconnector_command(license_id, command, symbol, risk, tp, sl, comment):
-    record = get_matching_record(symbol)
-    if record:
-        state_long = record['fields'].get('State Long', '')
-        state_short = record['fields'].get('State Short', '')
-        snr = record['fields'].get('SnR', '')
-        if 'BB' in state_long or 'BB' in state_short:
-            app.logger.debug(f"Not sending PineConnector command for {symbol} because 'BB' is in State Long or State Short")
-            return
-        if snr == 'Support' and command == 'short' and state_short == 'closed':
-            app.logger.debug(f"Not sending PineConnector command for {symbol} because SnR is Support and the command is a new short order")
-            return
-        if snr == 'Resistance' and command == 'long' and state_long == 'closed':
-            app.logger.debug(f"Not sending PineConnector command for {symbol} because SnR is Resistance and the command is a new long order")
-            return
-        
-        start_time = time(20, 0, 0)
-        end_time = time(5, 0, 0)
-        current_time = datetime.utcnow().time()
+    pineconnector_command = generate_pineconnector_command(license_id, command, symbol, risk, tp, sl, comment)
+    app.logger.debug(f"Sending PineConnector command: {pineconnector_command}")
+    response = requests.get(f"{config.PINECONNECTOR_URL}/execute?command={pineconnector_command}")
+    app.logger.debug(f"PineConnector response: {response.text}")
 
-    if start_time < end_time:
-        if start_time <= current_time <= end_time:
-            pineconnector_command = generate_pineconnector_command(license_id, command, symbol, risk, tp, sl, comment)
-            app.logger.debug(f"Sending PineConnector command: {pineconnector_command}")
-            response = requests.get(f"{config.PINECONNECTOR_URL}/execute?command={pineconnector_command}")
-            app.logger.debug(f"PineConnector response: {response.text}")
-    else:
-        if start_time <= current_time or current_time <= end_time:
-            pineconnector_command = generate_pineconnector_command(license_id, command, symbol, risk, tp, sl, comment)
-            app.logger.debug(f"Sending PineConnector command: {pineconnector_command}")
-            response = requests.get(f"{config.PINECONNECTOR_URL}/execute?command={pineconnector_command}")
-            app.logger.debug(f"PineConnector response: {response.text}")
-    
-        if command in ["closelong", "closeshort"]:
-            update_airtable_state(symbol, "closed", command)
-            update_airtable_count(symbol, "-", command)
-        elif command in ["long", "short"]:
-            record = get_matching_record(symbol)
-            if record:
-                state_field = 'State Long' if command == 'long' else 'State Short'
-                trend = record['fields'].get('Trend', 'flat')
-                state = record['fields'].get(state_field, 'closed')
-                if (command == "long" and trend == "up" and state == "closed") or (command == "short" and trend == "down" and state == "closed"):
-                    update_airtable_state(symbol, "open", command)
-                    update_airtable_count(symbol, command)
-                    send_pineconnector_command(license_id, command, symbol, risk, tp, sl, comment)
-                elif (command == "long" and state == "open") or (command == "short" and state == "open"):
-                    send_pineconnector_command(license_id, command, symbol, risk, tp, sl, comment)
+    if command in ["long", "short"]:
+        update_airtable_state(symbol, "open", command)
+        update_airtable_count(symbol, command)
 
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8080, debug=True)
+if __name__ == "__main__":
+    app.run(host='0.0.0.0', port=5000, debug=True)
