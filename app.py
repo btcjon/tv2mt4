@@ -103,7 +103,7 @@ def webhook():
             risk = parts[3] if len(parts) > 3 else None
             tp = None  # tp is not provided in the webhook data
             sl = None  # sl is not provided in the webhook data
-            comment = parts[4] if len(parts) > 4 else None
+            comment = parts[4].split('=')[1].strip('\"') if len(parts) > 4 else None
             app.logger.debug(f"Parsed command: {command}, symbol: {symbol}, risk: {risk}, tp: {tp}, sl: {sl}, comment: {comment}")
 
         record = get_matching_record(symbol)
