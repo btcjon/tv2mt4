@@ -106,13 +106,15 @@ def webhook():
 
         record = get_matching_record(symbol)
         if record:
-            app.logger.debug(f"Found record for {symbol} with state {record['fields']['State']} and trend {record['fields']['Trend']}")
+            state_field = 'State Long' if command == 'long' else 'State Short'
+            state = record['fields'].get(state_field)
+            trend = record['fields'].get('Trend')
+            app.logger.debug(f"Found record for {symbol} with {state_field} {state} and trend {trend}")
             if command in ["up", "down", "flat"]:
                 update_airtable_trend(symbol, command)
             elif (command == "long" and record['fields']['Trend'] == "up") or (command == "short" and record['fields']['Trend'] == "down"):
                 if config.CHECK_STATE:
-                    state_field = 'State Long' if command == 'long' else 'State Short'
-                    if record['fields'][state_field] == "closed":
+                    if state == "closed":
                         send_pineconnector_command(license_id, command, symbol, risk, tp, sl, comment)
                 else:
                     send_pineconnector_command(license_id, command, symbol, risk, tp, sl, comment)
