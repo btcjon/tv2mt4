@@ -126,8 +126,10 @@ def webhook():
 def send_pineconnector_command(license_id, command, symbol, risk, tp, sl, comment):
     pineconnector_command = generate_pineconnector_command(license_id, command, symbol, risk, tp, sl, comment)
     app.logger.debug(f"Sending PineConnector command: {pineconnector_command}")
-    response = requests.get(f"{config.PINECONNECTOR_WEBHOOK_URL}/execute?command={pineconnector_command}")
+    response = requests.post(config.PINECONNECTOR_WEBHOOK_URL, data=pineconnector_command)
     app.logger.debug(f"PineConnector response: {response.text}")
+    if response.status_code != 200:
+        app.logger.error(f"Failed to send PineConnector command: {response.text}")
 
     if response.status_code == 200:  # Check the response status code
         update_airtable_state(symbol, "open", command)
