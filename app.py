@@ -104,18 +104,24 @@ def webhook():
             sl = parts[5] if len(parts) > 5 else None
             comment = parts[6] if len(parts) > 6 else None
 
+        app.logger.debug(f"Parsed command: {command}, symbol: {symbol}, risk: {risk}, tp: {tp}, sl: {sl}, comment: {comment}")
+
         record = get_matching_record(symbol)
+        app.logger.debug(f"Retrieved record: {record}")
+
         if record:
-            state_field = 'State Long' if command == 'long' else 'State Short'  # Define state_field here
+            state_field = 'State Long' if command == 'long' else 'State Short'
             state = record['fields'].get(state_field)
             trend = record['fields'].get('Trend')
+            snr = record['fields'].get('SnR')
+
+            app.logger.debug(f"Retrieved state: {state}, trend: {trend}, snr: {snr}")
 
             if command in ["up", "down", "flat"]:
                 update_airtable_trend(symbol, command)
-            elif (command == "long" and trend == "up") or (command == "short" and trend == "down"):
-                if config.CHECK_STATE:
-                    if state == "closed":
-                        send_pineconnector_command(license_id, command, symbol, risk, tp, sl, comment)
+            elif (command == "long" and trend == "up" and snr != "Resistance") or (command == "short" and trend == "down" and snr != "Support"):
+                if not config.CHECK_STATE or state == "closed":
+                    send_pineconnector_command(license_id, command, symbol, risk, tp, sl, comment)
     return '', 200
 
 def send_pineconnector_command(license_id, command, symbol, risk, tp, sl, comment):
@@ -124,7 +130,7 @@ def send_pineconnector_command(license_id, command, symbol, risk, tp, sl, commen
     response = requests.get(f"{config.PINECONNECTOR_URL}/execute?command={pineconnector_command}")
     app.logger.debug(f"PineConnector response: {response.text}")
 
-    if command in ["long", "short"]:
+    if response.status_code == 200:  # Check the response status code
         update_airtable_state(symbol, "open", command)
         update_airtable_count(symbol, command)
 
