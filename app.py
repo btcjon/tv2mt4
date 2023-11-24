@@ -106,7 +106,7 @@ def webhook():
 
         record = get_matching_record(symbol)
         if record:
-                        app.logger.debug(f"Found record for {symbol} with state {record['fields']['State']} and trend {record['fields']['Trend']}")
+            app.logger.debug(f"Found record for {symbol} with state {record['fields']['State']} and trend {record['fields']['Trend']}")
             if command in ["up", "down", "flat"]:
                 update_airtable_trend(symbol, command)
             elif (command == "long" and record['fields']['Trend'] == "up") or (command == "short" and record['fields']['Trend'] == "down"):
