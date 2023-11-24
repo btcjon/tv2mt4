@@ -102,8 +102,8 @@ def webhook():
             symbol = parts[2]
             risk = parts[3] if len(parts) > 3 else None
             tp = None  # tp is not provided in the webhook data
-            sl = parts[4] if len(parts) > 4 else None
-            comment = parts[5] if len(parts) > 5 else None
+            sl = None  # sl is not provided in the webhook data
+            comment = parts[4] if len(parts) > 4 else None
             app.logger.debug(f"Parsed command: {command}, symbol: {symbol}, risk: {risk}, tp: {tp}, sl: {sl}, comment: {comment}")
 
         record = get_matching_record(symbol)
@@ -120,8 +120,7 @@ def webhook():
             if command in ["up", "down", "flat"]:
                 update_airtable_trend(symbol, command)
             elif (command == "long" and trend == "up" and snr != "Resistance") or (command == "short" and trend == "down" and snr != "Support"):
-                if not config.CHECK_STATE or state == "closed":
-                    send_pineconnector_command(license_id, command, symbol, risk, tp, sl, comment)
+                send_pineconnector_command(license_id, command, symbol, risk, tp, sl, comment)
     return '', 200
 
 def send_pineconnector_command(license_id, command, symbol, risk, tp, sl, comment):
