@@ -60,10 +60,6 @@ def webhook():
     app.logger.debug(f"Received webhook data: {data}")
     parts = data.split(',')
 
-    if len(parts) < 2:
-        app.logger.error(f"Invalid webhook data: {data}")
-        return '', 400
-
     message = parts[0]
 
     if "Zone Found" in message:
@@ -78,29 +74,30 @@ def webhook():
         symbol = message.split(' - ')[0]
         update_airtable_snr(symbol, "-")
 
-    license_id = risk = tp = sl = comment = None
-    if len(parts) == 2:
-        command, symbol = parts
-    else:
-        license_id = parts[0]
-        command = parts[1]
-        symbol = parts[2]
-        risk = parts[3] if len(parts) > 3 else None
-        tp = parts[4] if len(parts) > 4 else None
-        sl = parts[5] if len(parts) > 5 else None
-        comment = parts[6] if len(parts) > 6 else None
+    if len(parts) >= 2:
+        license_id = risk = tp = sl = comment = None
+        if len(parts) == 2:
+            command, symbol = parts
+        else:
+            license_id = parts[0]
+            command = parts[1]
+            symbol = parts[2]
+            risk = parts[3] if len(parts) > 3 else None
+            tp = parts[4] if len(parts) > 4 else None
+            sl = parts[5] if len(parts) > 5 else None
+            comment = parts[6] if len(parts) > 6 else None
 
-    record = get_matching_record(symbol)
-    if record:
-        app.logger.debug(f"Found record for {symbol} with state {record['fields']['State']} and trend {record['fields']['Trend']}")
-        if command in ["up", "down", "flat"]:
-            update_airtable_trend(symbol, command)
-        elif (command == "long" and record['fields']['Trend'] == "up") or (command == "short" and record['fields']['Trend'] == "down"):
-            if config.CHECK_STATE:
-                if record['fields']['State'] == "closed":
+        record = get_matching_record(symbol)
+        if record:
+            app.logger.debug(f"Found record for {symbol} with state {record['fields']['State']} and trend {record['fields']['Trend']}")
+            if command in ["up", "down", "flat"]:
+                update_airtable_trend(symbol, command)
+            elif (command == "long" and record['fields']['Trend'] == "up") or (command == "short" and record['fields']['Trend'] == "down"):
+                if config.CHECK_STATE:
+                    if record['fields']['State'] == "closed":
+                        send_pineconnector_command(license_id, command, symbol, risk, tp, sl, comment)
+                else:
                     send_pineconnector_command(license_id, command, symbol, risk, tp, sl, comment)
-            else:
-                send_pineconnector_command(license_id, command, symbol, risk, tp, sl, comment)
     return '', 200
 
 def send_pineconnector_command(license_id, command, symbol, risk, tp, sl, comment):
