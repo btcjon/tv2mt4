@@ -5,4 +5,4 @@ AIRTABLE_TABLE_NAME = 'table1'
 NGROK_AUTH_TOKEN = '2RQAN658II3AIdb9t09ogLi1wJ4_2JATXbhEEYRhzrSuJraBv'
 PINECONNECTOR_WEBHOOK_URL = 'https://pineconnector.net/webhook/'
 LICENSE_ID = '6700960415957'  # Add this line
-CHECK_STATE = False
+CHECK_STATE = True
