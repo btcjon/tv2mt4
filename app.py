@@ -38,28 +38,40 @@ def webhook():
     alert_details = message_parser.parse_alert(data)
     symbol = alert_details.get("symbol")
 
-    if alert_details.get("is_zone_found"):
-        pass  # Handle zone found case if needed
-    elif alert_details.get("enters_support"):
-        airtable_manager.update_snr(symbol, "Support", app.logger)
-    elif alert_details.get("enters_resistance"):
-        airtable_manager.update_snr(symbol, "Resistance", app.logger)
-    elif alert_details.get("is_breaking"):
-        airtable_manager.update_snr(symbol, "-", app.logger)
+    # Assuming the alert details contain the necessary information for processing
+    # The following code is a placeholder and should be replaced with actual logic
+    # based on the structure of the incoming webhook data.
 
-    if len(parts) >= 2:
-        license_id = risk = tp = sl = comment = None
-        if len(parts) == 2:
-            command, symbol = parts
-        else:
-            license_id = parts[0]
-            command = parts[1]
-            symbol = parts[2]
-            risk = parts[3] if len(parts) > 3 else None
-            tp = None  # tp is not provided in the webhook data
-            sl = None  # sl is not provided in the webhook data
-            comment = parts[4].split('=')[1].strip('\"') if len(parts) > 4 else None
-            app.logger.debug(f"Parsed command: {command}, symbol: {symbol}, risk: {risk}, tp: {tp}, sl: {sl}, comment: {comment}")
+    # Example of processing an alert with a command and symbol
+    if 'command' in alert_details and 'symbol' in alert_details:
+        command = alert_details['command']
+        symbol = alert_details['symbol']
+        # Additional details such as risk, tp, sl, and comment can be extracted similarly
+
+        # Process the command and symbol as needed
+        # This may involve updating Airtable records or sending commands to PineConnector
+        # The actual implementation will depend on the specific requirements and data format
+
+        # Example of updating trend in Airtable
+        if command in ["up", "down", "flat"]:
+            airtable_manager.update_trend(symbol, command, app.logger)
+
+        # Example of sending a command to PineConnector
+        if command in ["long", "short"]:
+            # Extract additional details such as risk, tp, sl, and comment
+            # These values should be extracted from the alert_details dictionary
+            # For this example, we'll use placeholder values
+            risk = alert_details.get('risk', None)
+            tp = alert_details.get('tp', None)
+            sl = alert_details.get('sl', None)
+            comment = alert_details.get('comment', None)
+
+            # Send the command to PineConnector
+            response = pineconnector_client.send_command(license_id, command, symbol, risk, tp, sl, comment, app.logger)
+            if response.status_code == 200:
+                # Update Airtable state and count if the command was successful
+                airtable_manager.update_state(symbol, "open", command, app.logger)
+                airtable_manager.update_count(symbol, command, app.logger)
 
         record = airtable_manager.get_matching_record(symbol)
         app.logger.debug(f"Retrieved record: {record}")
