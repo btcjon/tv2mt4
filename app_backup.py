@@ -96,6 +96,7 @@ def webhook():
         license_id = risk = tp = sl = comment = None
         if len(parts) == 2:
             command, symbol = parts
+            app.logger.debug(f"Received trend update command: {command} for symbol: {symbol}")
         else:
             license_id = parts[0]
             command = parts[1]
@@ -105,6 +106,9 @@ def webhook():
             sl = None  # sl is not provided in the webhook data
             comment = parts[4].split('=')[1].strip('\"') if len(parts) > 4 else None
             app.logger.debug(f"Parsed command: {command}, symbol: {symbol}, risk: {risk}, tp: {tp}, sl: {sl}, comment: {comment}")
+
+        # Additional logging to verify Airtable update
+        app.logger.debug(f"Attempting to update Airtable for symbol: {symbol} with trend: {command}")
 
         record = get_matching_record(symbol)
         app.logger.debug(f"Retrieved record: {record}")
