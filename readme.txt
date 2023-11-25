@@ -1,3 +1,7 @@
+Various incoming webhook text messages in various short text message formats incoming.
+
+Our system then parses the messages to determine actions to take involving reading and updating airtable as well as sending messages to PineConnector service via webhook a raw body text.
+
 1. Updating the 'SnR' field:
    The application updates the 'SnR' (Support and Resistance) field in Airtable based on specific keywords found in the incoming webhook messages. When a message contains phrases like "enters Support" or "enters Resistance," the application identifies the symbol from the message and updates the corresponding 'SnR' field in Airtable to "Support" or "Resistance," respectively. If a message indicates that a symbol "is breaking," the 'SnR' field is cleared.
 
@@ -14,7 +18,7 @@
    2. 6700960415957,down,EURCHF
    3. 6700960415957,flat,EURCHF
 
-3. Sending a PineConnector command:
+3. Sending a PineConnector command via webhook:
    When the application receives a webhook message with a trading command ("long" or "short"), it constructs a command string to be sent to PineConnector. The command includes the license ID, the action to be taken (long or short), the symbol, and any additional parameters such as risk, take profit (tp), stop loss (sl), and a comment. This command is then sent to the PineConnector webhook URL. If the PineConnector service successfully processes the command, the application proceeds to update the Airtable with the new state and count.
 
    Sample incoming messages that prompt Sending a Pineconnector command:
