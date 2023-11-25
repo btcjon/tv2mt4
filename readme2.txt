@@ -23,3 +23,12 @@ Message Parsing and Handling:
 - The application is designed to be flexible and can be easily extended to handle additional message types and formats by updating the `MessageParser` class.
 
 By separating concerns into different modules, the application becomes easier to manage and update. Each module can be modified independently, allowing for targeted updates and testing without affecting other parts of the application.
+
+1. Updating the 'SnR' field:
+
+2. Updating the 'Trend' field:
+
+3. Sending a PineConnector command:
+
+4. updating of 'State Long' and 'State Short':
+
