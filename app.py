@@ -34,9 +34,17 @@ pineconnector_client = PineConnectorClient()
 @app.route('/webhook', methods=['POST'])
 def webhook():
     data = request.data.decode('utf-8')
-    app.logger.debug(f"Received webhook data: {data}")
-    alert_details = message_parser.parse_alert(data)
-    symbol = alert_details.get("symbol")
+    try:
+        app.logger.debug(f"Received webhook data: {data}")
+        alert_details = message_parser.parse_alert(data)
+        symbol = alert_details.get("symbol")
+        app.logger.debug(f"Parsed alert details: {alert_details}")
+
+        # Rest of the existing code...
+
+    except Exception as e:
+        app.logger.error(f"An error occurred: {e}")
+        return 'Error', 500
 
     # Assuming the alert details contain the necessary information for processing
     # The following code is a placeholder and should be replaced with actual logic
