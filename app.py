@@ -68,7 +68,7 @@ def handle_td9buy(message):
         app.logger.error(f"Invalid TD9buy command: {message}")
         return
 
-    command, symbol = parts[1], parts[2]
+    command, symbol = parts[2], parts[3] if parts[1] == "OFF" else parts[1], parts[2]
     airtable_operations.update_airtable_td9buy(symbol, command != "OFF")
 
 def handle_td9sell(message):
@@ -77,7 +77,7 @@ def handle_td9sell(message):
         app.logger.error(f"Invalid TD9sell command: {message}")
         return
 
-    command, symbol = parts[1], parts[2]
+    command, symbol = parts[2], parts[3] if parts[1] == "OFF" else parts[1], parts[2]
     airtable_operations.update_airtable_td9sell(symbol, command != "OFF")
 
 def handle_pineconnector_command(message):
