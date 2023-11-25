@@ -1,7 +1,7 @@
 from flask import Flask, request
-from airtable import Airtable
-import requests
-import config
+from airtable_manager import AirtableManager
+from message_parser import MessageParser
+from pineconnector_client import PineConnectorClient
 import logging
 from datetime import datetime, time
 
