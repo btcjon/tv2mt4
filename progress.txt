@@ -1,0 +1,20 @@
+My Query: app.py parses various incoming messages, then updates an airtable with various rules, and for certain messages, sends a message to another webhook.  I plan on adding more and more incoming messages and rules, is this the best way to do this or are there other methods you recommend as we continue to add to our script that may make it more flexible and modular?  
+
+Aider suggested and began the process of...
+
+**Separate Concerns**: Break down your code into separate modules based on functionality. For example, you could have a module for Airtable interactions, another for message parsing, and another for sending commands to PineConnector.
+
+airtable_manager.py
+pineconnector_client.py
+message_parser.py
+
+files were created, but app.py code is not cleaned up and its unclear id all modules have correct code.
+
+please refer to app_backup.py to made sure all code accounted for in the new modules.
+
+Make Small changes in re-organizing code. Do not try to do all at once.
+
+Start with message_parser.py and app.py ONLY
+
+Note your progress by appending to this text file below.
+
