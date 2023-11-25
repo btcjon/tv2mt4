@@ -1,11 +1,10 @@
 from flask import Flask, request
-from airtable_manager import AirtableManager
+import logging
+from datetime import datetime, time
 from message_parser import MessageParser
 from airtable_manager import AirtableManager
 from pineconnector_client import PineConnectorClient
-from pineconnector_client import PineConnectorClient
-import logging
-from datetime import datetime, time
+import config
 
 app = Flask(__name__)
 handler = logging.StreamHandler()
@@ -13,7 +12,9 @@ handler.setLevel(logging.DEBUG)
 app.logger.addHandler(handler)
 app.logger.setLevel(logging.DEBUG)
 
-airtable = Airtable(config.AIRTABLE_BASE_ID, config.AIRTABLE_TABLE_NAME, api_key=config.AIRTABLE_API_KEY)
+message_parser = MessageParser()
+airtable_manager = AirtableManager()
+pineconnector_client = PineConnectorClient()
 
 # This function is removed because it is now handled by the MessageParser class.
 
@@ -34,21 +35,17 @@ airtable = Airtable(config.AIRTABLE_BASE_ID, config.AIRTABLE_TABLE_NAME, api_key
 def webhook():
     data = request.data.decode('utf-8')
     app.logger.debug(f"Received webhook data: {data}")
-    parts = data.split(',')
+    alert_details = message_parser.parse_alert(data)
+    symbol = alert_details.get("symbol")
 
-    message = parts[0]
-
-    if "Zone Found" in message:
-        pass
-    elif "enters" in message and "Support" in message:
-        symbol = message.split(' - ')[0]
-        update_airtable_snr(symbol, "Support")
-    elif "enters" in message and "Resistance" in message:
-        symbol = message.split(' - ')[0]
-        update_airtable_snr(symbol, "Resistance")
-    elif "is breaking" in message:
-        symbol = message.split(' - ')[0]
-        update_airtable_snr(symbol, "-")
+    if alert_details.get("is_zone_found"):
+        pass  # Handle zone found case if needed
+    elif alert_details.get("enters_support"):
+        airtable_manager.update_snr(symbol, "Support", app.logger)
+    elif alert_details.get("enters_resistance"):
+        airtable_manager.update_snr(symbol, "Resistance", app.logger)
+    elif alert_details.get("is_breaking"):
+        airtable_manager.update_snr(symbol, "-", app.logger)
 
     if len(parts) >= 2:
         license_id = risk = tp = sl = comment = None
@@ -64,7 +61,7 @@ def webhook():
             comment = parts[4].split('=')[1].strip('\"') if len(parts) > 4 else None
             app.logger.debug(f"Parsed command: {command}, symbol: {symbol}, risk: {risk}, tp: {tp}, sl: {sl}, comment: {comment}")
 
-        record = get_matching_record(symbol)
+        record = airtable_manager.get_matching_record(symbol)
         app.logger.debug(f"Retrieved record: {record}")
 
         if record:
@@ -76,28 +73,15 @@ def webhook():
             app.logger.debug(f"Retrieved state: {state}, trend: {trend}, snr: {snr}")
 
             if command in ["up", "down", "flat"]:
-                update_airtable_trend(symbol, command)
+                airtable_manager.update_trend(symbol, command, app.logger)
             elif (command == "long" and trend == "up" and snr != "Resistance") or (command == "short" and trend == "down" and snr != "Support"):
-                send_pineconnector_command(license_id, command, symbol, risk, tp, sl, comment)
+                response = pineconnector_client.send_command(license_id, command, symbol, risk, tp, sl, comment, app.logger)
+                if response.status_code == 200:
+                    airtable_manager.update_state(symbol, "open", command, app.logger)
+                    airtable_manager.update_count(symbol, command, app.logger)
     return '', 200
 
-def send_pineconnector_command(license_id, command, symbol, risk, tp, sl, comment):
-    pineconnector_command = generate_pineconnector_command(license_id, command, symbol, risk, tp, sl, comment)
-    app.logger.debug(f"Sending PineConnector command: {pineconnector_command}")
-    response = requests.post(config.PINECONNECTOR_WEBHOOK_URL, data=pineconnector_command)
-    app.logger.debug(f"PineConnector response: {response.text}")
-    if response.status_code != 200:
-        app.logger.error(f"Failed to send PineConnector command: {response.text}")
-
-    if response.status_code == 200:  # Check the response status code
-        update_airtable_state(symbol, "open", command)
-        update_airtable_count(symbol, command)
-    else:
-        app.logger.error(f"Failed to send PineConnector command: {response.text}")
-
-    if response.status_code == 200:  # Check the response status code
-        update_airtable_state(symbol, "open", command)
-        update_airtable_count(symbol, command)
+# This function is removed because it is now handled by the PineConnectorClient class.
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=True)
