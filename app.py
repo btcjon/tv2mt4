@@ -1,10 +1,9 @@
 from flask import Flask, request
+from airtable import Airtable
+import requests
+import config
 import logging
 from datetime import datetime, time
-from message_parser import MessageParser
-from airtable_manager import AirtableManager
-from pineconnector_client import PineConnectorClient
-import config
 
 app = Flask(__name__)
 handler = logging.StreamHandler()
@@ -12,33 +11,74 @@ handler.setLevel(logging.DEBUG)
 app.logger.addHandler(handler)
 app.logger.setLevel(logging.DEBUG)
 
-message_parser = MessageParser()
-airtable_manager = AirtableManager()
-pineconnector_client = PineConnectorClient()
+airtable = Airtable(config.AIRTABLE_BASE_ID, config.AIRTABLE_TABLE_NAME, api_key=config.AIRTABLE_API_KEY)
 
-# This function is removed because it is now handled by the MessageParser class.
+def parse_alert(alert):
+    alert_details = {"is_bearish": False, "symbol": None}
+    parts = alert.split(" ")
 
-# This function is removed because it is now handled by the PineConnectorClient class.
+    if parts[0].lower() == "bearish":
+        alert_details["is_bearish"] = True
+        alert_details["symbol"] = parts[-1]
+
+    return alert_details
+
+def generate_pineconnector_command(license_id, command, symbol, risk=None, tp=None, sl=None, comment=None):
+    pineconnector_command = f"{license_id},{command},{symbol}"
+    if risk:
+        pineconnector_command += f",{risk}"
+    if tp:
+        pineconnector_command += f",tp={tp}"
+    if sl:
+        pineconnector_command += f",sl={sl}"
+    if comment:
+        pineconnector_command += f",comment=\"{comment}\""
+    return pineconnector_command.replace(",tp=None", "").replace(",sl=None", "")
 
 
-# This function is removed because it is now handled by the AirtableManager class.
+def get_matching_record(symbol):
+    symbol_without_pro = symbol.replace('.PRO', '')
+    records = airtable.get_all(formula=f"{{Symbol}} = '{symbol_without_pro}'")
+    return records[0] if records else None
 
-# This function is removed because it is now handled by the AirtableManager class.
+def update_airtable_trend(symbol, trend):
+    record = get_matching_record(symbol)
+    app.logger.debug(f"Updating trend for {symbol} to {trend}")
+    if record:
+        response = airtable.update(record['id'], {'Trend': trend})
+        app.logger.debug(f"Airtable update response: {response}")
 
-# This function is removed because it is now handled by the AirtableManager class.
+def update_airtable_snr(symbol, snr):
+    record = get_matching_record(symbol)
+    app.logger.debug(f"Updating SnR for {symbol} to {snr}")
+    if record:
+        response = airtable.update(record['id'], {'SnR': snr})
+        app.logger.debug(f"Airtable update response: {response}")
 
-# This function is removed because it is now handled by the AirtableManager class.
+def update_airtable_state(symbol, state, command):
+    record = get_matching_record(symbol)
+    state_field = 'State Long' if command == 'long' else 'State Short'
+    app.logger.debug(f"Updating {state_field} for {symbol} to {state}")
+    if record:
+        response = airtable.update(record['id'], {state_field: state})
+        app.logger.debug(f"Airtable update response: {response}")
 
-# This function is removed because it is now handled by the AirtableManager class.
+def update_airtable_count(symbol, command):
+    record = get_matching_record(symbol)
+    count_field = 'Count Long' if command == 'long' else 'Count Short'
+    if record:
+        count = record['fields'].get(count_field, '-')
+        count = '0' if count == '-' else str(int(count) + 1)
+        response = airtable.update(record['id'], {count_field: count})
+        app.logger.debug(f"Airtable update response: {response}")
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
-    data = request.data.decode('utf-8')
     try:
+        data = request.data.decode('utf-8')
         app.logger.debug(f"Received webhook data: {data}")
-        alert_details = message_parser.parse_alert(data)
-        symbol = alert_details.get("symbol")
-        app.logger.debug(f"Parsed alert details: {alert_details}")
+        parts = data.split(',')
+        app.logger.debug(f"Parsed webhook parts: {parts}")
 
         # Rest of the existing code...
 
@@ -46,42 +86,39 @@ def webhook():
         app.logger.error(f"An error occurred: {e}")
         return 'Error', 500
 
-    # Assuming the alert details contain the necessary information for processing
-    # The following code is a placeholder and should be replaced with actual logic
-    # based on the structure of the incoming webhook data.
+    message = parts[0]
 
-    # Example of processing an alert with a command and symbol
-    if 'command' in alert_details and 'symbol' in alert_details:
-        command = alert_details['command']
-        symbol = alert_details['symbol']
-        # Additional details such as risk, tp, sl, and comment can be extracted similarly
+    if "Zone Found" in message:
+        pass
+    elif "enters" in message and "Support" in message:
+        symbol = message.split(' - ')[0]
+        update_airtable_snr(symbol, "Support")
+    elif "enters" in message and "Resistance" in message:
+        symbol = message.split(' - ')[0]
+        update_airtable_snr(symbol, "Resistance")
+    elif "is breaking" in message:
+        symbol = message.split(' - ')[0]
+        update_airtable_snr(symbol, "-")
 
-        # Process the command and symbol as needed
-        # This may involve updating Airtable records or sending commands to PineConnector
-        # The actual implementation will depend on the specific requirements and data format
+    if len(parts) >= 2:
+        license_id = risk = tp = sl = comment = None
+        if len(parts) == 2:
+            command, symbol = parts
+            app.logger.debug(f"Received trend update command: {command} for symbol: {symbol}")
+        else:
+            license_id = parts[0]
+            command = parts[1]
+            symbol = parts[2]
+            risk = parts[3] if len(parts) > 3 else None
+            tp = None  # tp is not provided in the webhook data
+            sl = None  # sl is not provided in the webhook data
+            comment = parts[4].split('=')[1].strip('\"') if len(parts) > 4 else None
+            app.logger.debug(f"Parsed command: {command}, symbol: {symbol}, risk: {risk}, tp: {tp}, sl: {sl}, comment: {comment}")
 
-        # Example of updating trend in Airtable
-        if command in ["up", "down", "flat"]:
-            airtable_manager.update_trend(symbol, command, app.logger)
+        # Additional logging to verify Airtable update
+        app.logger.debug(f"Attempting to update Airtable for symbol: {symbol} with trend: {command}")
 
-        # Example of sending a command to PineConnector
-        if command in ["long", "short"]:
-            # Extract additional details such as risk, tp, sl, and comment
-            # These values should be extracted from the alert_details dictionary
-            # For this example, we'll use placeholder values
-            risk = alert_details.get('risk', None)
-            tp = alert_details.get('tp', None)
-            sl = alert_details.get('sl', None)
-            comment = alert_details.get('comment', None)
-
-            # Send the command to PineConnector
-            response = pineconnector_client.send_command(license_id, command, symbol, risk, tp, sl, comment, app.logger)
-            if response.status_code == 200:
-                # Update Airtable state and count if the command was successful
-                airtable_manager.update_state(symbol, "open", command, app.logger)
-                airtable_manager.update_count(symbol, command, app.logger)
-
-        record = airtable_manager.get_matching_record(symbol)
+        record = get_matching_record(symbol)
         app.logger.debug(f"Retrieved record: {record}")
 
         if record:
@@ -93,15 +130,28 @@ def webhook():
             app.logger.debug(f"Retrieved state: {state}, trend: {trend}, snr: {snr}")
 
             if command in ["up", "down", "flat"]:
-                airtable_manager.update_trend(symbol, command, app.logger)
+                update_airtable_trend(symbol, command)
             elif (command == "long" and trend == "up" and snr != "Resistance") or (command == "short" and trend == "down" and snr != "Support"):
-                response = pineconnector_client.send_command(license_id, command, symbol, risk, tp, sl, comment, app.logger)
-                if response.status_code == 200:
-                    airtable_manager.update_state(symbol, "open", command, app.logger)
-                    airtable_manager.update_count(symbol, command, app.logger)
+                send_pineconnector_command(license_id, command, symbol, risk, tp, sl, comment)
     return '', 200
 
-# This function is removed because it is now handled by the PineConnectorClient class.
+def send_pineconnector_command(license_id, command, symbol, risk, tp, sl, comment):
+    pineconnector_command = generate_pineconnector_command(license_id, command, symbol, risk, tp, sl, comment)
+    app.logger.debug(f"Sending PineConnector command: {pineconnector_command}")
+    response = requests.post(config.PINECONNECTOR_WEBHOOK_URL, data=pineconnector_command)
+    app.logger.debug(f"PineConnector response: {response.text}")
+    if response.status_code != 200:
+        app.logger.error(f"Failed to send PineConnector command: {response.text}")
+
+    if response.status_code == 200:  # Check the response status code
+        update_airtable_state(symbol, "open", command)
+        update_airtable_count(symbol, command)
+    else:
+        app.logger.error(f"Failed to send PineConnector command: {response.text}")
+
+    if response.status_code == 200:  # Check the response status code
+        update_airtable_state(symbol, "open", command)
+        update_airtable_count(symbol, command)
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=True)
