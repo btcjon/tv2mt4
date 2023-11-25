@@ -25,10 +25,14 @@ Message Parsing and Handling:
 By separating concerns into different modules, the application becomes easier to manage and update. Each module can be modified independently, allowing for targeted updates and testing without affecting other parts of the application.
 
 1. Updating the 'SnR' field:
+   The application updates the 'SnR' (Support and Resistance) field in Airtable based on specific keywords found in the incoming webhook messages. When a message contains phrases like "enters Support" or "enters Resistance," the application identifies the symbol from the message and updates the corresponding 'SnR' field in Airtable to "Support" or "Resistance," respectively. If a message indicates that a symbol "is breaking," the 'SnR' field is cleared.
 
 2. Updating the 'Trend' field:
+   The 'Trend' field in Airtable is updated when the incoming webhook message contains a command such as "up," "down," or "flat." The application parses the message, extracts the symbol and the trend direction, and updates the 'Trend' field in Airtable with the new value. This allows the system to track the current trend direction for each symbol.
 
 3. Sending a PineConnector command:
+   When the application receives a webhook message with a trading command ("long" or "short"), it constructs a command string to be sent to PineConnector. The command includes the license ID, the action to be taken (long or short), the symbol, and any additional parameters such as risk, take profit (tp), stop loss (sl), and a comment. This command is then sent to the PineConnector webhook URL. If the PineConnector service successfully processes the command, the application proceeds to update the Airtable with the new state and count.
 
-4. updating of 'State Long' and 'State Short':
+4. Updating of 'State Long' and 'State Short':
+   After sending a command to PineConnector, the application updates the 'State Long' or 'State Short' field in Airtable, depending on whether the command was to go long or short. This field represents the current state of the trade for the symbol. Additionally, the application increments the 'Count Long' or 'Count Short' field, which keeps track of the number of times a long or short command has been issued for the symbol.
 
