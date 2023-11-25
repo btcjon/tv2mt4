@@ -41,50 +41,22 @@ def generate_pineconnector_command(license_id, command, symbol, risk=None, tp=No
 def handle_zone_found(message):
     pass  # No action is taken for "Zone Found" scenario
 
-def handle_enters_support(message):
-    symbol = message.split(' - ')[0]
-    airtable_operations.update_airtable_snr(symbol, "Support")
+from command_handlers import UpdateSnRHandler, UpdateTrendHandler
 
-def handle_enters_resistance(message):
-    symbol = message.split(' - ')[0]
-    airtable_operations.update_airtable_snr(symbol, "Resistance")
+# Instantiate command handlers
+update_snr_handler = UpdateSnRHandler(airtable_operations)
+update_trend_handler = UpdateTrendHandler(airtable_operations)
 
-def handle_is_breaking(message):
-    symbol = message.split(' - ')[0]
-    airtable_operations.update_airtable_snr(symbol, "-")
-
-def handle_trend(message):
-    parts = message.split(',')
-    if len(parts) != 3:
-        app.logger.error(f"Invalid trend update command: {message}")
-        return
-
-    license_id, trend, symbol = parts
-    airtable_operations.update_airtable_trend(symbol, trend)
-
-def handle_td9buy(message):
-    parts = message.split(' ')
-    if len(parts) < 3:
-        app.logger.error(f"Invalid TD9buy command: {message}")
-        return
-
-    if parts[1] == "OFF":
-        command, symbol = parts[2], parts[3]
-    else:
-        command, symbol = parts[1], parts[2]
-    airtable_operations.update_airtable_td9buy(symbol, command != "OFF")
-
-def handle_td9sell(message):
-    parts = message.split(' ')
-    if len(parts) < 3:
-        app.logger.error(f"Invalid TD9sell command: {message}")
-        return
-
-    if parts[1] == "OFF":
-        command, symbol = parts[2], parts[3]
-    else:
-        command, symbol = parts[1], parts[2]
-    airtable_operations.update_airtable_td9sell(symbol, command != "OFF")
+# Update the message_handlers dictionary to use the new command handler instances
+message_handlers = {
+    "enters Support": update_snr_handler.handle,
+    "enters Resistance": update_snr_handler.handle,
+    "is breaking": update_snr_handler.handle,
+    "up": update_trend_handler.handle,
+    "down": update_trend_handler.handle,
+    "flat": update_trend_handler.handle,
+    # ... other handlers will be updated similarly ...
+}
 
 def handle_pineconnector_command(message):
     parts = message.split(',')
