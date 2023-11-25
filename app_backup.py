@@ -74,9 +74,17 @@ def update_airtable_count(symbol, command):
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
-    data = request.data.decode('utf-8')
-    app.logger.debug(f"Received webhook data: {data}")
-    parts = data.split(',')
+    try:
+        data = request.data.decode('utf-8')
+        app.logger.debug(f"Received webhook data: {data}")
+        parts = data.split(',')
+        app.logger.debug(f"Parsed webhook parts: {parts}")
+
+        # Rest of the existing code...
+
+    except Exception as e:
+        app.logger.error(f"An error occurred: {e}")
+        return 'Error', 500
 
     message = parts[0]
 
