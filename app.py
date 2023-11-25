@@ -149,15 +149,16 @@ message_handlers = {
     # add more as needed
 }
 
+from message import Message
+from message_parser import MessageParser
+
 @app.route('/webhook', methods=['POST'])
 def webhook():
+    message_parser = MessageParser()
     try:
         data = request.data.decode('utf-8')
         app.logger.debug(f"Received webhook data: {data}")
-        parts = data.split(',')
-        app.logger.debug(f"Parsed webhook parts: {parts}")
-
-        message = parts[0]
+        message = message_parser.parse(data)
 
         for keyword, handler in message_handlers.items():
             if keyword in message:
