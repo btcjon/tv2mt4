@@ -1,6 +1,8 @@
 from flask import Flask, request
 from airtable_manager import AirtableManager
 from message_parser import MessageParser
+from airtable_manager import AirtableManager
+from pineconnector_client import PineConnectorClient
 from pineconnector_client import PineConnectorClient
 import logging
 from datetime import datetime, time
@@ -13,64 +15,20 @@ app.logger.setLevel(logging.DEBUG)
 
 airtable = Airtable(config.AIRTABLE_BASE_ID, config.AIRTABLE_TABLE_NAME, api_key=config.AIRTABLE_API_KEY)
 
-def parse_alert(alert):
-    alert_details = {"is_bearish": False, "symbol": None}
-    parts = alert.split(" ")
+# This function is removed because it is now handled by the MessageParser class.
 
-    if parts[0].lower() == "bearish":
-        alert_details["is_bearish"] = True
-        alert_details["symbol"] = parts[-1]
-
-    return alert_details
-
-def generate_pineconnector_command(license_id, command, symbol, risk=None, tp=None, sl=None, comment=None):
-    pineconnector_command = f"{license_id},{command},{symbol}"
-    if risk:
-        pineconnector_command += f",{risk}"
-    if tp:
-        pineconnector_command += f",tp={tp}"
-    if sl:
-        pineconnector_command += f",sl={sl}"
-    if comment:
-        pineconnector_command += f",comment=\"{comment}\""
-    return pineconnector_command.replace(",tp=None", "").replace(",sl=None", "")
+# This function is removed because it is now handled by the PineConnectorClient class.
 
 
-def get_matching_record(symbol):
-    symbol_without_pro = symbol.replace('.PRO', '')
-    records = airtable.get_all(formula=f"{{Symbol}} = '{symbol_without_pro}'")
-    return records[0] if records else None
+# This function is removed because it is now handled by the AirtableManager class.
 
-def update_airtable_trend(symbol, trend):
-    record = get_matching_record(symbol)
-    app.logger.debug(f"Updating trend for {symbol} to {trend}")
-    if record:
-        response = airtable.update(record['id'], {'Trend': trend})
-        app.logger.debug(f"Airtable update response: {response}")
+# This function is removed because it is now handled by the AirtableManager class.
 
-def update_airtable_snr(symbol, snr):
-    record = get_matching_record(symbol)
-    app.logger.debug(f"Updating SnR for {symbol} to {snr}")
-    if record:
-        response = airtable.update(record['id'], {'SnR': snr})
-        app.logger.debug(f"Airtable update response: {response}")
+# This function is removed because it is now handled by the AirtableManager class.
 
-def update_airtable_state(symbol, state, command):
-    record = get_matching_record(symbol)
-    state_field = 'State Long' if command == 'long' else 'State Short'
-    app.logger.debug(f"Updating {state_field} for {symbol} to {state}")
-    if record:
-        response = airtable.update(record['id'], {state_field: state})
-        app.logger.debug(f"Airtable update response: {response}")
+# This function is removed because it is now handled by the AirtableManager class.
 
-def update_airtable_count(symbol, command):
-    record = get_matching_record(symbol)
-    count_field = 'Count Long' if command == 'long' else 'Count Short'
-    if record:
-        count = record['fields'].get(count_field, '-')
-        count = '0' if count == '-' else str(int(count) + 1)
-        response = airtable.update(record['id'], {count_field: count})
-        app.logger.debug(f"Airtable update response: {response}")
+# This function is removed because it is now handled by the AirtableManager class.
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
