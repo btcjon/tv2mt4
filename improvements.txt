@@ -6,26 +6,17 @@
    - Create a base CommandHandler class.
    - Implement specific handlers for each action (e.g., UpdateSnRHandler, UpdateTrendHandler, SendPineConnectorCommandHandler).
 
-3. **Queue System:**
-   - Use a task queue (e.g., Celery) to manage message processing.
-
-4. **Configuration Management:**
+3. **Configuration Management:**
    - Move patterns and keywords to a JSON or YAML configuration file.
 
-5. **Logging and Monitoring:**
-   - Use a logging framework to log messages at various levels (INFO, DEBUG, ERROR).
-   - Set up monitoring for the application (e.g., with Prometheus and Grafana).
+4. **Logging and Monitoring:**
+   - Make sure each part has logging
 
-6. **Unit Testing:**
-   - Write tests for each component using a testing framework like `pytest`.
+Step-by-Step Plan for Steps 1 and 2
 
-7. **Error Handling:**
-   - Add try-except blocks where appropriate.
-   - Use custom exceptions to handle specific error cases.1. Refactor Message Parsing:
-   - Use regex to extract information from messages.
-   - Create a MessageParser class that returns a structured Message object.
+*Important, use app10.py and airtable_operations.py as reference to the original code we are refactoring for our app.py, message_parser.py, message.py
 
-Step-by-Step Plan:
+**Once each item is "done" append "DONE" at the end of its line
 
 A. Define a Message class:
    1. Create a new class called Message with an __init__ method.
@@ -36,6 +27,9 @@ B. Define a MessageParser class:
    2. Define an __init__ method that initializes a dictionary to hold regex patterns for different message types.
    3. Add a parse method that takes a raw message as input and iterates over the regex patterns to find a match.
    4. For each message type, define a separate parsing method (e.g., parse_trend, parse_snr) that uses the corresponding regex pattern to extract information and returns a populated Message object.
+        **List each message type below (list is incomplete, please list all)
+        4a. trend
+        4b. SnR
 
 C. Update the webhook handler in app.py:
    1. Instantiate the MessageParser class in the webhook handler function.
@@ -43,6 +37,4 @@ C. Update the webhook handler in app.py:
    3. Replace the existing parsing logic in the webhook handler with the new structured Message object to handle different actions.
 
 D. Test the new message parsing logic:
-   1. Create test cases for different message formats that the system is expected to handle.
-   2. Verify that the MessageParser correctly parses each test case and returns the expected Message object.
-   3. Ensure that the webhook handler functions as expected with the new MessageParser logic.
+   1. I will make live on server and we will send various messages to test from postman and see if they work
