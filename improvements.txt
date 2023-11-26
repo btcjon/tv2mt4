@@ -27,9 +27,11 @@ B. Define a MessageParser class: DONE
    2. Define an __init__ method that initializes a dictionary to hold regex patterns for different message types. DONE
    3. Add a parse method that takes a raw message as input and iterates over the regex patterns to find a match. DONE
    4. For each message type, define a separate parsing method (e.g., parse_trend, parse_snr) that uses the corresponding regex pattern to extract information and returns a populated Message object. DONE
-        **List each message type below (list is incomplete, please list all) DONE
+        **List each message type below (list is complete, all are DONE) DONE
         4a. trend DONE
         4b. SnR DONE
+        4c. td9 DONE
+        4d. pineconnector DONE
 
 C. Update the webhook handler in app.py: DONE
    1. Instantiate the MessageParser class in the webhook handler function. DONE
