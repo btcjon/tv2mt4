@@ -107,12 +107,11 @@ def webhook():
                     else:
                         # Existing checks for trend, resistance, support, and TD9 indicators
                         # ... (This comment should be followed by the actual checks or removed if not applicable)
-
-                airtable_operations.update_airtable_field(symbol, f'State {order_type.capitalize()}', 'open')
-                airtable_operations.increment_airtable_field(symbol, count_field)
-            elif order_type in ['closelong', 'closeshort']:
-                airtable_operations.update_airtable_field(symbol, f'State {order_type[5:].capitalize()}', 'closed')
-                airtable_operations.reset_airtable_field(symbol, f'{order_type[5:].capitalize()}#')
+                        airtable_operations.update_airtable_field(symbol, f'State {order_type.capitalize()}', 'open')
+                        airtable_operations.increment_airtable_field(symbol, count_field)
+                    elif order_type in ['closelong', 'closeshort']:
+                        airtable_operations.update_airtable_field(symbol, f'State {order_type[5:].capitalize()}', 'closed')
+                        airtable_operations.reset_airtable_field(symbol, f'{order_type[5:].capitalize()}#')
 
             return '', 200
 
