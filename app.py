@@ -73,9 +73,15 @@ def webhook():
             field_name = None
             if keyword in ['resistance', 'support', 'TD9buy', 'TD9sell', 'up', 'down']:
                 field_name = keyword
-            elif keyword in ['resistanceOFF', 'supportOFF', 'TD9sellOff']:
+            elif keyword == 'resistanceOFF':
                 update_value = False
-                field_name = keyword.replace('OFF', '')
+                field_name = 'Resistance'
+            elif keyword == 'supportOFF':
+                update_value = False
+                field_name = 'Support'
+            elif keyword == 'TD9sellOff':
+                update_value = False
+                field_name = 'TD9sell'
             if field_name:
                 airtable_operations.update_airtable_field(symbol, field_name, update_value)
                 app.logger.info(f"Processed update message for symbol: {symbol}")
