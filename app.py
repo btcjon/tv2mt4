@@ -165,20 +165,22 @@ def webhook():
                     send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
 
             # Add the check for Long# and Short# fields being greater than '0'
-            if order_type in ['long', 'short']:
-                record = airtable_operations.get_matching_record(symbol)
-                if record:
-                    count_field = f'{order_type.capitalize()}#'
-                    count = record['fields'].get(count_field, '0')
-                    if int(count) > 0:
-                        send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
-                    # Existing checks for trend, resistance, support, and TD9 indicators
-                    # ... (This comment should be followed by the actual checks or removed if not applicable)
-                    airtable_operations.update_airtable_field(symbol, f'State {order_type.capitalize()}', 'open')
-                    airtable_operations.increment_airtable_field(symbol, count_field)
-                elif order_type in ['closelong', 'closeshort']:
-                        airtable_operations.update_airtable_field(symbol, f'State {order_type[5:].capitalize()}', 'closed')
-                        airtable_operations.reset_airtable_field(symbol, f'{order_type[5:].capitalize()}#')
+            if order_type == 'long':
+                # ... (existing code for handling 'long' orders)
+                if condition_to_send_long_order:  # Replace with actual condition
+                    send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
+                    airtable_operations.update_airtable_field(symbol, 'State Long', 'open')
+                    airtable_operations.increment_airtable_field(symbol, 'Long#')
+            elif order_type == 'short':
+                # ... (existing code for handling 'short' orders)
+                if condition_to_send_short_order:  # Replace with actual condition
+                    send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
+                    airtable_operations.update_airtable_field(symbol, 'State Short', 'open')
+                    airtable_operations.increment_airtable_field(symbol, 'Short#')
+            elif order_type in ['closelong', 'closeshort']:
+                send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
+                airtable_operations.update_airtable_field(symbol, f'State {order_type[5:].capitalize()}', 'closed')
+                airtable_operations.reset_airtable_field(symbol, f'{order_type[5:].capitalize()}#')
 
             return '', 200
 
