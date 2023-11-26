@@ -110,11 +110,16 @@ def webhook():
             elif keyword == 'down':
                 field_name = 'Trend'
                 update_value = 'down'
-            if field_name is not None and update_value is not None:
-                airtable_operations.update_airtable_field(symbol, field_name, update_value)
-                app.logger.info(f"Processed update message for symbol: {symbol}")
-            else:
-                app.logger.error(f"Unrecognized keyword in update message for symbol: {symbol}: {keyword}")
+            try:
+                if field_name is not None and update_value is not None:
+                    airtable_operations.update_airtable_field(symbol, field_name, update_value)
+                    app.logger.info(f"Processed update message for symbol: {symbol}")
+                else:
+                    app.logger.error(f"Unrecognized keyword in update message for symbol: {symbol}: {keyword}")
+                return '', 200
+            except Exception as e:
+                app.logger.exception(f"An exception occurred while processing the update message for symbol: {symbol}: {e}")
+                return 'Error', 500
         elif message_type == 'order':
             order_type = message_dict.get('order-type')
             risk = message_dict.get('risk')
