@@ -27,18 +27,10 @@ class AirtableOperations:
             response = self.airtable.update(record['id'], {'SnR': snr})
             self.logger.debug(f"Airtable update response: {response}")
     
-    def update_airtable_td9buy(self, symbol, status):
+    def update_airtable_td9buy(self, symbol, status_bool):
         record = self.get_matching_record(symbol)
-        self.logger.debug(f"Updating '1H TD9buy' for {symbol} to {status}")
+        self.logger.debug(f"Updating '1H TD9buy' for {symbol} to {status_bool}")
         if record:
-            response = self.airtable.update(record['id'], {'1H TD9buy': str(status).lower()})
-            self.logger.debug(f"Airtable update response: {response}")
-
-    def update_airtable_td9buy(self, symbol, status):
-        record = self.get_matching_record(symbol)
-        self.logger.debug(f"Updating '1H TD9buy' for {symbol} to {status}")
-        if record:
-            status_bool = status.lower() == 'true'
             response = self.airtable.update(record['id'], {'1H TD9buy': status_bool})
             self.logger.debug(f"Airtable update response: {response}")
 
