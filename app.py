@@ -147,7 +147,7 @@ def webhook():
             return '', 200
 
     except Exception as e:
-        app.logger.error(f"An error occurred: {e}")
+        app.logger.exception("An unhandled exception occurred in the webhook function")
         return 'Error', 500
     
     return '', 200
