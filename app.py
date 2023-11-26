@@ -30,6 +30,14 @@ class AirtableOperations:
                 self.logger.info(f"Successfully updated {field} for {symbol} to {value}")
             else:
                 self.logger.warning(f"No matching record found for symbol: {symbol}")
+        except requests.exceptions.ConnectionError as e:
+            self.logger.error(f"Connection error when updating {field} for {symbol} to {value}: {e}, retrying...")
+            time.sleep(5)  # Wait for 5 seconds before retrying
+            try:
+                response = self.airtable.update(record['id'], {field: value})
+                self.logger.info(f"Successfully updated {field} for {symbol} to {value} on retry")
+            except Exception as retry_e:
+                self.logger.error(f"Failed to update {field} for {symbol} to {value} on retry: {retry_e}")
         except Exception as e:
             self.logger.error(f"Failed to update {field} for {symbol} to {value}: {e}")
 
