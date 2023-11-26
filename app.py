@@ -2,7 +2,8 @@ from flask import Flask, request
 import logging
 import requests
 import config
-from datetime import datetime, time
+from datetime import datetime
+import time
 from airtable import Airtable
 
 app = Flask(__name__)
@@ -26,7 +27,7 @@ class AirtableOperations:
             record = self.get_matching_record(symbol)
             self.logger.debug(f"Attempting to update {field} for {symbol} to {value}")
             if record:
-                response = self.airtable.update(record['id'], {field: value})
+                self.airtable.update(record['id'], {field: value})
                 self.logger.info(f"Successfully updated {field} for {symbol} to {value}")
             else:
                 self.logger.warning(f"No matching record found for symbol: {symbol}")
@@ -111,7 +112,7 @@ def webhook():
 
             # Check if the current time is within the restricted period
             if start <= now <= end:
-                return  # If it is, do not send any commands to PineConnector
+                return '', 200  # If it is, do not send any commands to PineConnector
 
             if order_type in ['closelong', 'closeshort']:
                 send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
@@ -158,8 +159,7 @@ def webhook():
         app.logger.exception(f"An unhandled exception occurred in the webhook function: {e}")
         return 'Error', 500
     
-    # This is the end of the function; ensure it always returns a response
-    return '', 200
+    # This return statement is unreachable and should be removed
 
 def send_pineconnector_command(order_type, symbol, risk, tp, sl, comment):
     symbol += '.PRO'  # append '.PRO' to the symbol
