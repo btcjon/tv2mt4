@@ -131,8 +131,8 @@ def webhook():
             now = datetime.utcnow().time()
 
             # Define the start and end of the restricted period in UTC
-            start = datetime.time(21, 55)  # 9:55 PM UTC
-            end = datetime.time(23, 0)  # 11:00 PM UTC
+            start = time(21, 55)  # 9:55 PM UTC
+            end = time(23, 0)  # 11:00 PM UTC
 
             # Check if the current time is within the restricted period
             if start <= now <= end:
