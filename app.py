@@ -58,7 +58,7 @@ def webhook():
         if message_type == 'update':
             keyword = message_dict.get('keyword')
             if keyword in ['resistance', 'support', 'TD9buy', 'TD9sell']:
-                airtable_operations.update_airtable_field(symbol, keyword.capitalize(), keyword.endswith('OFF'))
+                airtable_operations.update_airtable_field(symbol, keyword.capitalize(), not keyword.endswith('OFF'))
             elif keyword in ['up', 'down']:
                 airtable_operations.update_airtable_field(symbol, 'Trend', keyword)
         elif message_type == 'order':
@@ -96,9 +96,20 @@ def webhook():
                     if (order_type == "long" and trend == "up" and snr != "Resistance") or (order_type == "short" and trend == "down" and snr != "Support"):
                         send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
 
+            # Add the check for Long# and Short# fields being greater than '0'
             if order_type in ['long', 'short']:
+                record = airtable_operations.get_matching_record(symbol)
+                if record:
+                    count_field = f'{order_type.capitalize()}#'
+                    count = record['fields'].get(count_field, '0')
+                    if int(count) > 0:
+                        send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
+                    else:
+                        # Existing checks for trend, resistance, support, and TD9 indicators
+                        # ...
+
                 airtable_operations.update_airtable_field(symbol, f'State {order_type.capitalize()}', 'open')
-                airtable_operations.increment_airtable_field(symbol, f'{order_type.capitalize()}#')
+                airtable_operations.increment_airtable_field(symbol, count_field)
             elif order_type in ['closelong', 'closeshort']:
                 airtable_operations.update_airtable_field(symbol, f'State {order_type[5:].capitalize()}', 'closed')
                 airtable_operations.reset_airtable_field(symbol, f'{order_type[5:].capitalize()}#')
