@@ -22,19 +22,29 @@ class AirtableOperations:
         return records[0] if records else None
 
     def update_airtable_field(self, symbol, field, value):
-        record = self.get_matching_record(symbol)
-        self.logger.debug(f"Updating {field} for {symbol} to {value}")
-        if record:
-            response = self.airtable.update(record['id'], {field: value})
-            self.logger.debug(f"Airtable update response: {response}")
+        try:
+            record = self.get_matching_record(symbol)
+            self.logger.debug(f"Attempting to update {field} for {symbol} to {value}")
+            if record:
+                response = self.airtable.update(record['id'], {field: value})
+                self.logger.info(f"Successfully updated {field} for {symbol} to {value}")
+            else:
+                self.logger.warning(f"No matching record found for symbol: {symbol}")
+        except Exception as e:
+            self.logger.error(f"Failed to update {field} for {symbol} to {value}: {e}")
 
     def increment_airtable_field(self, symbol, field):
-        record = self.get_matching_record(symbol)
-        if record:
-            count = record['fields'].get(field, '0')
-            count = str(int(count) + 1)
-            response = self.airtable.update(record['id'], {field: count})
-            self.logger.debug(f"Airtable update response: {response}")
+        try:
+            record = self.get_matching_record(symbol)
+            if record:
+                count = record['fields'].get(field, '0')
+                count = str(int(count) + 1)
+                response = self.airtable.update(record['id'], {field: count})
+                self.logger.info(f"Successfully incremented {field} for {symbol} by 1")
+            else:
+                self.logger.warning(f"No matching record found for symbol: {symbol}")
+        except Exception as e:
+            self.logger.error(f"Failed to increment {field} for {symbol}: {e}")
 
     def reset_airtable_field(self, symbol, field):
         record = self.get_matching_record(symbol)
@@ -56,11 +66,15 @@ def webhook():
         symbol = message_dict.get('symbol')
 
         if message_type == 'update':
-            keyword = message_dict.get('keyword')
-            if keyword in ['resistance', 'support', 'TD9buy', 'TD9sell']:
-                airtable_operations.update_airtable_field(symbol, keyword.capitalize(), not keyword.endswith('OFF'))
-            elif keyword in ['up', 'down']:
-                airtable_operations.update_airtable_field(symbol, 'Trend', keyword)
+            try:
+                keyword = message_dict.get('keyword')
+                if keyword in ['resistance', 'support', 'TD9buy', 'TD9sell']:
+                    airtable_operations.update_airtable_field(symbol, keyword.capitalize(), not keyword.endswith('OFF'))
+                elif keyword in ['up', 'down']:
+                    airtable_operations.update_airtable_field(symbol, 'Trend', keyword)
+                app.logger.info(f"Processed update message for symbol: {symbol}")
+            except Exception as e:
+                app.logger.error(f"Failed to process update message for symbol: {symbol}: {e}")
         elif message_type == 'order':
             order_type = message_dict.get('order-type')
             risk = message_dict.get('risk')
