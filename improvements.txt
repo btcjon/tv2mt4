@@ -38,5 +38,5 @@ C. Update the webhook handler in app.py: DONE
    2. Use the parse method of the MessageParser instance to convert the raw incoming message into a structured Message object. DONE
    3. Replace the existing parsing logic in the webhook handler with the new structured Message object to handle different actions. DONE
 
-D. Test the new message parsing logic: DONE
-   1. I will make live on server and we will send various messages to test from postman and see if they work DONE
+D. Test the new message parsing logic: IN PROGRESS
+   1. I will make live on server and we will send various messages to test from postman and see if they work IN PROGRESS
