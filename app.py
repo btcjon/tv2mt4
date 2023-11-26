@@ -158,6 +158,7 @@ def webhook():
         app.logger.exception("An unhandled exception occurred in the webhook function")
         return 'Error', 500
     
+    # This is the end of the function; ensure it always returns a response
     return '', 200
 
 def send_pineconnector_command(order_type, symbol, risk, tp, sl, comment):
