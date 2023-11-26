@@ -114,15 +114,15 @@ def webhook():
             if start <= now <= end:
                 return '', 200  # If it is, do not send any commands to PineConnector
 
+            record = airtable_operations.get_matching_record(symbol)
+            if record:
+                bb_present = record['fields'].get('BB')  # get the BB field
+                if bb_present:
+                    app.logger.info(f"Order for {symbol} filtered: BB is present")
+                    return '', 200  # if BB is present, do not send command to PineConnector
+
             if order_type in ['closelong', 'closeshort']:
                 send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
-            else:
-                record = airtable_operations.get_matching_record(symbol)
-                if record:
-                    bb_present = record['fields'].get('BB')  # get the BB field
-                    if bb_present:
-                        app.logger.info(f"Order for {symbol} filtered: BB is present")
-                        return  # if BB is present, do not send command to PineConnector
 
                     state_field = 'State Long' if order_type == 'long' else 'State Short'
                     state = record['fields'].get(state_field)
@@ -134,7 +134,12 @@ def webhook():
                     if order_type == "long" and snr == "Resistance":
                         app.logger.info(f"Order for {symbol} filtered: SnR is Resistance")
 
-                    if (order_type == "long" and trend == "up" and snr != "Resistance") or (order_type == "short" and trend == "down" and snr != "Support"):
+                    td9sell_present = record['fields'].get('TD9sell')  # get the TD9sell field for long orders
+                    td9buy_present = record['fields'].get('TD9buy')  # get the TD9buy field for short orders
+
+                    if order_type == "long" and trend == "up" and not td9sell_present and snr != "Resistance":
+                        send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
+                    elif order_type == "short" and trend == "down" and not td9buy_present and snr != "Support":
                         send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
 
             # Add the check for Long# and Short# fields being greater than '0'
