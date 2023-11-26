@@ -131,6 +131,8 @@ def webhook():
     except Exception as e:
         app.logger.error(f"An error occurred: {e}")
         return 'Error', 500
+    
+    return '', 200
 
 def send_pineconnector_command(order_type, symbol, risk, tp, sl, comment):
     pineconnector_command = f"{config.PINECONNECTOR_LICENSE_ID},{order_type},{symbol}"
