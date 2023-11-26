@@ -1,0 +1,4 @@
+trend: '(\\d+),(up|down|flat),(\\w+)'
+snr: '(\\w+) - Price (enters|is breaking) (D )?(Support|Resistance) Zone'
+td9: '1H TD9(buy|sell)( OFF)? (\\w+)'
+pineconnector: '(\\d+),(long|short|closelong|closeshort),(\\w+\\.PRO)(?:,risk=(\\d+))?(?:,tp=(\\d+))?(?:,sl=(\\d+))?(?:,comment="([^"]+)")?'

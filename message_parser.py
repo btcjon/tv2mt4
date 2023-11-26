@@ -1,14 +1,10 @@
 import re
 from message import Message
+import config
 
 class MessageParser:
     def __init__(self):
-        self.patterns = {
-            'trend': re.compile(r'(\d+),(up|down|flat),(\w+)'),
-            'snr': re.compile(r'(\w+) - Price (enters|is breaking) (D )?(Support|Resistance) Zone'),
-            'td9': re.compile(r'1H TD9(buy|sell)( OFF)? (\w+)'),
-            'pineconnector': re.compile(r'(\d+),(long|short|closelong|closeshort),(\w+\.PRO)(?:,risk=(\d+))?(?:,tp=(\d+))?(?:,sl=(\d+))?(?:,comment="([^"]+)")?')
-        }
+        self.patterns = {key: re.compile(pattern) for key, pattern in config.PATTERNS.items()}
 
     def parse(self, raw_message):
         for key, pattern in self.patterns.items():
