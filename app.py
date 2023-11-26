@@ -68,14 +68,10 @@ def webhook():
         if message_type == 'update':
             try:
                 keyword = message_dict.get('keyword')
-                if keyword in ['resistance', 'support', 'TD9buy', 'TD9sell']:
+                if keyword in ['resistance', 'support', 'TD9buy', 'TD9sell', 'resistanceOFF', 'supportOFF', 'TD9sellOff', 'up', 'down']:
                     update_value = not keyword.endswith('OFF')
-                    field_name = keyword.replace('Off', '').replace('On', '').capitalize()
+                    field_name = keyword.replace('Off', '')
                     airtable_operations.update_airtable_field(symbol, field_name, update_value)
-                elif keyword in ['resistanceOFF', 'supportOFF', 'TD9sellOff']:
-                    airtable_operations.update_airtable_field(symbol, keyword.replace('Off', '').capitalize(), False)
-                elif keyword in ['up', 'down']:
-                    airtable_operations.update_airtable_field(symbol, 'Trend', keyword)
                 app.logger.info(f"Processed update message for symbol: {symbol}")
             except Exception as e:
                 app.logger.error(f"Failed to process update message for symbol: {symbol}: {e}")
