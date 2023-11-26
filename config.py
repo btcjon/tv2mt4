@@ -1,10 +1,3 @@
-# config.py
-import yaml
-
-# Load patterns from YAML configuration file
-with open('patterns.yaml', 'r') as file:
-    PATTERNS = yaml.safe_load(file)
-
 AIRTABLE_API_KEY = 'key8E4aVpJpRArGyw'
 AIRTABLE_BASE_ID = 'app2hV8yClkObvn6v'
 AIRTABLE_TABLE_NAME = 'table1'
