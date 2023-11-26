@@ -38,6 +38,8 @@ class AirtableOperations:
             record = self.get_matching_record(symbol)
             if record:
                 count = record['fields'].get(field, '0')
+                if not count.isdigit():
+                    count = '0'
                 count = str(int(count) + 1)
                 response = self.airtable.update(record['id'], {field: count})
                 self.logger.info(f"Successfully incremented {field} for {symbol} by 1")
@@ -141,6 +143,7 @@ def webhook():
     return '', 200
 
 def send_pineconnector_command(order_type, symbol, risk, tp, sl, comment):
+    symbol += '.PRO'  # append '.PRO' to the symbol
     pineconnector_command = f"{config.PINECONNECTOR_LICENSE_ID},{order_type},{symbol}"
     if risk:
         pineconnector_command += f",risk={risk}"
