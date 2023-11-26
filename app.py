@@ -154,8 +154,8 @@ def webhook():
 
             return '', 200
 
-    except Exception:
-        app.logger.exception("An unhandled exception occurred in the webhook function")
+    except Exception as e:
+        app.logger.exception(f"An unhandled exception occurred in the webhook function: {e}")
         return 'Error', 500
     
     # This is the end of the function; ensure it always returns a response
