@@ -3,7 +3,7 @@ import logging
 import requests
 import config
 from datetime import datetime
-import time
+from datetime import time
 from airtable import Airtable
 
 app = Flask(__name__)
@@ -132,7 +132,7 @@ def webhook():
 
             # Define the start and end of the restricted period in UTC
             start = time(21, 55)  # 9:55 PM UTC
-            end = time(22, 58)  # 11:00 PM UTC
+            end = time(23, 0)  # 11:00 PM UTC
 
             # Check if the current time is within the restricted period
             if start <= now <= end:
