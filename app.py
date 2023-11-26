@@ -100,12 +100,18 @@ def webhook():
                 if record:
                     bb_present = record['fields'].get('BB')  # get the BB field
                     if bb_present:
+                        app.logger.info(f"Order for {symbol} filtered: BB is present")
                         return  # if BB is present, do not send command to PineConnector
 
                     state_field = 'State Long' if order_type == 'long' else 'State Short'
                     state = record['fields'].get(state_field)
                     trend = record['fields'].get('Trend')
                     snr = record['fields'].get('SnR')
+
+                    if order_type == "long" and trend != "up":
+                        app.logger.info(f"Order for {symbol} filtered: Trend is not up")
+                    if order_type == "long" and snr == "Resistance":
+                        app.logger.info(f"Order for {symbol} filtered: SnR is Resistance")
 
                     if (order_type == "long" and trend == "up" and snr != "Resistance") or (order_type == "short" and trend == "down" and snr != "Support"):
                         send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)

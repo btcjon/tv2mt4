@@ -90,10 +90,10 @@ Only found in type=order messages
     
 
     Examples of incoming type=order messages
-        example1: type=order,symbol=EURNZD,order-type=long,risk=1,comment="7-0-30"
-        example2: type=order,symbol=EURNZD,order-type=closelong,comment="7-0-30"
-        example3: type=order,symbol=EURNZD,order-type=long,risk=1,tp=0.08,comment="7-0-30"
-        example4: type=order,symbol=EURNZD,order-type=long,risk=1,tp=0.08,sl=0.1,comment="7-0-30"
+        example1: type=order,order-type=long,symbol=EURNZD.PRO,risk=1,comment="7-0-30"
+        example2: type=order,order-type=closelong,symbol=EURNZD.PRO,comment="7-0-30"
+        example3: type=order,order-type=long,symbol=EURNZD.PRO,risk=1,tp=0.08,comment="7-0-30"
+        example4: type=order,order-type=long,symbol=EURNZD.PRO,risk=1,tp=0.08,sl=0.1,comment="7-0-30"
 
 Handling type=order messages:
 
