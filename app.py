@@ -172,11 +172,16 @@ def webhook():
                     airtable_operations.update_airtable_field(symbol, 'State Long', 'open')
                     airtable_operations.increment_airtable_field(symbol, 'Long#')
             elif order_type == 'short':
-                # ... (existing code for handling 'short' orders)
-                if condition_to_send_short_order:  # Replace with actual condition
+                short_count = int(record['fields'].get('Short#', 0))
+                trend = record['fields'].get('Trend')
+                support = record['fields'].get('Support', False)
+                td9buy = record['fields'].get('TD9buy', False)
+                # Check if Short# is greater than 0 or if trend is down and no support or TD9buy signal is present
+                if short_count > 0 or (trend == 'down' and not support and not td9buy):
                     send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
-                    airtable_operations.update_airtable_field(symbol, 'State Short', 'open')
-                    airtable_operations.increment_airtable_field(symbol, 'Short#')
+                    if short_count == 0:  # Only update if Short# was 0
+                        airtable_operations.update_airtable_field(symbol, 'State Short', 'open')
+                        airtable_operations.increment_airtable_field(symbol, 'Short#')
             elif order_type in ['closelong', 'closeshort']:
                 send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
                 airtable_operations.update_airtable_field(symbol, f'State {order_type[5:].capitalize()}', 'closed')
