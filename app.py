@@ -137,8 +137,8 @@ def webhook():
             return '', 200
 
     except Exception as e:
-        app.logger.exception("An unhandled exception occurred in the webhook function.")
-        return 'Internal Server Error', 500
+        app.logger.error(f"An error occurred: {e}")
+        return 'Error', 500
     
     return '', 200
 
@@ -159,3 +159,8 @@ def send_pineconnector_command(order_type, symbol, risk, tp, sl, comment):
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=True)
+
+
+
+
+
