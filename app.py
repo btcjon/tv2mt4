@@ -106,7 +106,7 @@ def webhook():
                         send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
                     else:
                         # Existing checks for trend, resistance, support, and TD9 indicators
-                        # ...
+                        # ... (This comment should be followed by the actual checks or removed if not applicable)
 
                 airtable_operations.update_airtable_field(symbol, f'State {order_type.capitalize()}', 'open')
                 airtable_operations.increment_airtable_field(symbol, count_field)
