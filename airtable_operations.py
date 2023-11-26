@@ -38,14 +38,16 @@ class AirtableOperations:
         record = self.get_matching_record(symbol)
         self.logger.debug(f"Updating '1H TD9buy' for {symbol} to {status}")
         if record:
-            response = self.airtable.update(record['id'], {'1H TD9buy': status})
+            status_bool = status.lower() == 'true'
+            response = self.airtable.update(record['id'], {'1H TD9buy': status_bool})
             self.logger.debug(f"Airtable update response: {response}")
 
     def update_airtable_td9sell(self, symbol, status):
         record = self.get_matching_record(symbol)
         self.logger.debug(f"Updating '1H TD9sell' for {symbol} to {status}")
         if record:
-            response = self.airtable.update(record['id'], {'1H TD9sell': status})
+            status_bool = status.lower() == 'true'
+            response = self.airtable.update(record['id'], {'1H TD9sell': status_bool})
             self.logger.debug(f"Airtable update response: {response}")
 
     def update_airtable_count(self, symbol, command):
