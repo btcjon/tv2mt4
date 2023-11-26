@@ -36,3 +36,23 @@ class MessageParser:
         match = self.patterns['pineconnector'].match(raw_message)
         if match:
             return Message(symbol=match.group(3), command=match.group(2), parameters=match.groupdict())
+
+    def parse_trend(self, raw_message):
+        match = self.patterns['trend'].match(raw_message)
+        if match:
+            return Message(symbol=match.group(3), command=match.group(2))
+
+    def parse_snr(self, raw_message):
+        match = self.patterns['snr'].match(raw_message)
+        if match:
+            return Message(symbol=match.group(1), command=match.group(2))
+
+    def parse_td9(self, raw_message):
+        match = self.patterns['td9'].match(raw_message)
+        if match:
+            return Message(symbol=match.group(3), command=match.group(1))
+
+    def parse_pineconnector(self, raw_message):
+        match = self.patterns['pineconnector'].match(raw_message)
+        if match:
+            return Message(symbol=match.group(3), command=match.group(2), parameters=match.groupdict())
