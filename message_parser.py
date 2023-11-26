@@ -1,4 +1,5 @@
 import re
+from message import Message
 
 class MessageParser:
     def __init__(self):
