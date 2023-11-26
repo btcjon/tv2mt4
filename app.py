@@ -78,20 +78,39 @@ def webhook():
 
         if message_type == 'update':
             keyword = message_dict.get('keyword')
-            update_value = True
             field_name = None
-            if keyword in ['resistance', 'support', 'TD9buy', 'TD9sell', 'up', 'down']:
-                field_name = keyword
-            elif keyword == 'resistanceOFF':
-                update_value = False
+            update_value = None
+            if keyword == 'resistance':
                 field_name = 'Resistance'
-            elif keyword == 'supportOFF':
+                update_value = True
+            elif keyword == 'resistanceOFF':
+                field_name = 'Resistance'
                 update_value = False
+            elif keyword == 'support':
                 field_name = 'Support'
-            elif keyword == 'TD9sellOff':
+                update_value = True
+            elif keyword == 'supportOFF':
+                field_name = 'Support'
                 update_value = False
+            elif keyword == 'TD9buy':
+                field_name = 'TD9buy'
+                update_value = True
+            elif keyword == 'TD9buyOFF':
+                field_name = 'TD9buy'
+                update_value = False
+            elif keyword == 'TD9sell':
                 field_name = 'TD9sell'
-            if field_name:
+                update_value = True
+            elif keyword == 'TD9sellOff':
+                field_name = 'TD9sell'
+                update_value = False
+            elif keyword == 'up':
+                field_name = 'Trend'
+                update_value = 'up'
+            elif keyword == 'down':
+                field_name = 'Trend'
+                update_value = 'down'
+            if field_name is not None and update_value is not None:
                 airtable_operations.update_airtable_field(symbol, field_name, update_value)
                 app.logger.info(f"Processed update message for symbol: {symbol}")
             else:
