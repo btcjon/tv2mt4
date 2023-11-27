@@ -79,7 +79,8 @@ def webhook():
         app.logger.debug(f"Received webhook data: {data}")
         parts = data.split(',')
 
-        message_dict = {part.split('=')[0]: part.split('=')[1] for part in parts}
+        # Only include parts that can be split into exactly two items with '='
+        message_dict = {part.split('=')[0]: part.split('=')[1] for part in parts if '=' in part and len(part.split('=')) == 2}
         message_type = message_dict.get('type')
         symbol = message_dict.get('symbol')
 
