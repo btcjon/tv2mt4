@@ -166,11 +166,16 @@ def webhook():
 
             # Add the check for Long# and Short# fields being greater than '0'
             if order_type == 'long':
-                # ... (existing code for handling 'long' orders)
-                if condition_to_send_long_order:  # Replace with actual condition
+                long_count = int(record['fields'].get('Long#', 0))
+                trend = record['fields'].get('Trend')
+                resistance = record['fields'].get('Resistance', False)
+                td9sell = record['fields'].get('TD9sell', False)
+                # Check if Long# is greater than 0 or if trend is up and no resistance or TD9sell signal is present
+                if long_count > 0 or (trend == 'up' and not resistance and not td9sell):
                     send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
-                    airtable_operations.update_airtable_field(symbol, 'State Long', 'open')
-                    airtable_operations.increment_airtable_field(symbol, 'Long#')
+                    if long_count == 0:  # Only update if Long# was 0
+                        airtable_operations.update_airtable_field(symbol, 'State Long', 'open')
+                        airtable_operations.increment_airtable_field(symbol, 'Long#')
             elif order_type == 'short':
                 short_count = int(record['fields'].get('Short#', 0))
                 trend = record['fields'].get('Trend')
