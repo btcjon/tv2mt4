@@ -46,20 +46,29 @@ class AirtableOperations:
         try:
             record = self.get_matching_record(symbol)
             if record:
-                count = record['fields'].get(field, 0)
+                count = record['fields'].get(field, '0')  # Ensure the default value is a string '0'
                 count = int(count) + 1
-                response = self.airtable.update(record['id'], {field: count})
+                self.airtable.update(record['id'], {field: str(count)})  # Convert the count back to string
                 self.logger.info(f"Successfully incremented {field} for {symbol} by 1")
             else:
                 self.logger.warning(f"No matching record found for symbol: {symbol}")
+        except requests.exceptions.HTTPError as http_err:
+            self.logger.error(f"HTTP error occurred when incrementing {field} for {symbol}: {http_err}")
         except Exception as e:
             self.logger.error(f"Failed to increment {field} for {symbol}: {e}")
 
     def reset_airtable_field(self, symbol, field):
-        record = self.get_matching_record(symbol)
-        if record:
-            response = self.airtable.update(record['id'], {field: '0'})
-            self.logger.debug(f"Airtable update response: {response}")
+        try:
+            record = self.get_matching_record(symbol)
+            if record:
+                self.airtable.update(record['id'], {field: '0'})  # Ensure the reset value is a string '0'
+                self.logger.info(f"Successfully reset {field} for {symbol}")
+            else:
+                self.logger.warning(f"No matching record found for symbol: {symbol}")
+        except requests.exceptions.HTTPError as http_err:
+            self.logger.error(f"HTTP error occurred when resetting {field} for {symbol}: {http_err}")
+        except Exception as e:
+            self.logger.error(f"Failed to reset {field} for {symbol}: {e}")
 
 airtable_operations = AirtableOperations()
 
