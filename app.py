@@ -61,7 +61,7 @@ class AirtableOperations:
         try:
             record = self.get_matching_record(symbol)
             if record:
-                self.airtable.update(record['id'], {field: str('0')})  # Convert the reset value to string explicitly
+                self.airtable.update(record['id'], {field: 0})  # Send an integer value for the reset
                 self.logger.info(f"Successfully reset {field} for {symbol}")
             else:
                 self.logger.warning(f"No matching record found for symbol: {symbol}")
