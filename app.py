@@ -221,9 +221,8 @@ def send_pineconnector_command(order_type, symbol, risk, tp, sl, comment):
     if sl:
         pineconnector_command += f",sl={sl}"
     if comment:
-        # Properly escape double quotes inside the comment and ensure no extra quotes are added
-        escaped_comment = comment.replace('"', '\\"')
-        pineconnector_command += f',comment={escaped_comment}'
+        # Ensure the comment is properly formatted without additional escaping
+        pineconnector_command += f',comment="{comment}"'
     app.logger.debug(f"Sending PineConnector command: {pineconnector_command}")
     response = requests.post(config.PINECONNECTOR_WEBHOOK_URL, data=pineconnector_command)
     app.logger.debug(f"PineConnector response: {response.text}")
