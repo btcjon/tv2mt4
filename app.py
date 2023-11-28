@@ -46,10 +46,15 @@ class AirtableOperations:
         try:
             record = self.get_matching_record(symbol)
             if record:
-                count = record['fields'].get(field, '0')  # Ensure the default value is a string '0'
+                count = record['fields'].get(field, 0)  # Ensure the default value is an integer 0
                 count = int(count) + 1
-                self.airtable.update(record['id'], {field: str(count)})  # Convert the count back to string
-                self.logger.info(f"Successfully incremented {field} for {symbol} by 1")
+                try:
+                    self.airtable.update(record['id'], {field: count})  # Send an integer value
+                    self.logger.info(f"Successfully incremented {field} for {symbol} by 1")
+                except requests.exceptions.HTTPError as http_err:
+                    self.logger.error(f"HTTP error occurred when incrementing {field} for {symbol}: {http_err.response.text}")
+                except Exception as e:
+                    self.logger.error(f"Failed to increment {field} for {symbol}: {e}")
             else:
                 self.logger.warning(f"No matching record found for symbol: {symbol}")
         except requests.exceptions.HTTPError as http_err:
