@@ -88,6 +88,8 @@ def webhook():
         message_dict = {part.split('=')[0]: part.split('=')[1] for part in parts if '=' in part and len(part.split('=')) == 2}
         message_type = message_dict.get('type')
         symbol = message_dict.get('symbol')
+        if symbol == 'US100':
+            symbol = 'USTEC100'
 
         if message_type == 'update':
             keyword = message_dict.get('keyword')
@@ -218,7 +220,7 @@ def webhook():
         return 'Error', 500
 
 def send_pineconnector_command(order_type, symbol, risk, tp, sl, comment):
-    if not symbol.endswith('.PRO'):
+    if not symbol.endswith('.PRO') and symbol != 'USTEC100':
         symbol += '.PRO'  # append '.PRO' to the symbol only if it's not already there
     pineconnector_command = f"{config.PINECONNECTOR_LICENSE_ID},{order_type},{symbol}"
     if risk:
