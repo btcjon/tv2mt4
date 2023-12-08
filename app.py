@@ -88,7 +88,7 @@ def webhook():
         message_dict = {part.split('=')[0]: part.split('=')[1] for part in parts if '=' in part and len(part.split('=')) == 2}
         message_type = message_dict.get('type')
         symbol = message_dict.get('symbol')
-        if symbol == 'US100':
+        if symbol == 'NAS100.PRO':
             symbol = 'USTEC100'
 
         if message_type == 'update':
