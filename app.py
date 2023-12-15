@@ -77,6 +77,24 @@ class AirtableOperations:
 
 airtable_operations = AirtableOperations()
 
+def send_pineconnector_command(order_type, symbol, risk, tp, sl, comment):
+    if not symbol.endswith('.PRO') and symbol != 'USTEC100':
+        symbol += '.PRO'  # append '.PRO' to the symbol only if it's not already there
+    pineconnector_command = f"{config.PINECONNECTOR_LICENSE_ID},{order_type},{symbol}"
+    if risk:
+        pineconnector_command += f",risk={risk}"
+    if tp:
+        pineconnector_command += f",tp={tp}"
+    if sl:
+        pineconnector_command += f",sl={sl}"
+    if comment:
+        # Directly append the comment without additional quotes
+        pineconnector_command += f',comment={comment}'
+    app.logger.debug(f"Sending PineConnector command: {pineconnector_command}")
+    response = requests.post(config.PINECONNECTOR_WEBHOOK_URL, data=pineconnector_command)
+    app.logger.debug(f"PineConnector response: {response.text}")
+
+
 @app.route('/webhook', methods=['POST'])
 def webhook():
     try:
@@ -84,63 +102,14 @@ def webhook():
         app.logger.debug(f"Received webhook data: {data}")
         parts = data.split(',')
 
-        # Only include parts that can be split into exactly two items with '='
-        message_dict = {part.split('=')[0]: part.split('=')[1] for part in parts if '=' in part and len(part.split('=')) == 2}
-        message_type = message_dict.get('type')
-        symbol = message_dict.get('symbol')
-        if symbol in ['NAS100', 'NAS100.PRO']:
-            symbol = 'USTEC100'
+        # Extract the order type and symbol from the data
+        order_type = parts[1].strip()
+        symbol = parts[2].strip()
 
-        if message_type == 'update':
-            keyword = message_dict.get('keyword')
-            field_name = None
-            update_value = None
-            if keyword == 'resistance':
-                field_name = 'Resistance'
-                update_value = True
-            elif keyword == 'resistanceOFF':
-                field_name = 'Resistance'
-                update_value = False
-            elif keyword == 'support':
-                field_name = 'Support'
-                update_value = True
-            elif keyword == 'supportOFF':
-                field_name = 'Support'
-                update_value = False
-            elif keyword == 'TD9buy':
-                field_name = 'TD9buy'
-                update_value = True
-            elif keyword == 'TD9buyOFF':
-                field_name = 'TD9buy'
-                update_value = False
-            elif keyword == 'TD9sell':
-                field_name = 'TD9sell'
-                update_value = True
-            elif keyword == 'TD9sellOFF':  # Corrected keyword
-                field_name = 'TD9sell'
-                update_value = False
-            elif keyword == 'up':
-                field_name = 'Trend'
-                update_value = 'up'
-            elif keyword == 'down':
-                field_name = 'Trend'
-                update_value = 'down'
-            try:
-                if field_name is not None and update_value is not None:
-                    airtable_operations.update_airtable_field(symbol, field_name, update_value)
-                    app.logger.info(f"Processed update message for symbol: {symbol}")
-                else:
-                    app.logger.error(f"Unrecognized keyword in update message for symbol: {symbol}: {keyword}")
-                return '', 200
-            except Exception as e:
-                app.logger.exception(f"An exception occurred while processing the update message for symbol: {symbol}: {e}")
-                return 'Error', 500
-        elif message_type == 'order':
-            order_type = message_dict.get('order-type')
-            risk = message_dict.get('risk')
-            tp = message_dict.get('tp')
-            sl = message_dict.get('sl')
-            comment = message_dict.get('comment')
+        # Check if the order type is 'long' or 'short'
+        if order_type in ['long', 'short']:
+            risk = parts[3].split('=')[1] if 'risk' in parts[3] else None
+            comment = parts[4].split('=')[1] if 'comment' in parts[4] else None
 
             # Get the current server time
             now = datetime.utcnow().time()
@@ -160,81 +129,281 @@ def webhook():
                     app.logger.info(f"Order for {symbol} filtered: BB is present")
                     return '', 200  # if BB is present, do not send command to PineConnector
 
-            if order_type in ['closelong', 'closeshort']:
-                send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
-
-                state_field = 'State Long' if order_type == 'long' else 'State Short'
-                state = record['fields'].get(state_field)
                 trend = record['fields'].get('Trend')
-                snr = record['fields'].get('SnR')
+                if (order_type == 'long' and trend != 'up') or (order_type == 'short' and trend != 'down'):
+                    app.logger.info(f"Order for {symbol} filtered: Trend is not correct")
+                    return '', 200  # if trend is not correct, do not send command to PineConnector
 
-                if config.FILTER_SNR and order_type == "long" and snr == "Resistance":
-                    app.logger.info(f"Order for {symbol} filtered: SnR is Resistance")
+                # If checks pass, send command to PineConnector
+                send_pineconnector_command(order_type, symbol, risk, None, None, comment)
 
-                td9sell_present = record['fields'].get('TD9sell')  # get the TD9sell field for long orders
-                td9buy_present = record['fields'].get('TD9buy')  # get the TD9buy field for short orders
+        else:
+            # Only include parts that can be split into exactly two items with '='
+            message_dict = {part.split('=')[0]: part.split('=')[1] for part in parts if '=' in part and len(part.split('=')) == 2}
+            message_type = message_dict.get('type')
+            symbol = message_dict.get('symbol')
+            if symbol in ['NAS100', 'NAS100.PRO']:
+                symbol = 'USTEC100'
 
-                if config.FILTER_TD9 and order_type == "long" and td9sell_present:
-                    app.logger.info(f"Order for {symbol} filtered: TD9sell is present")
+            if message_type == 'update':
+                keyword = message_dict.get('keyword')
+                field_name = None
+                update_value = None
 
-                if config.FILTER_TREND and order_type == "long" and trend != "up":
-                    app.logger.info(f"Order for {symbol} filtered: Trend is not up")
+                if keyword == 'resistance':
+                    field_name = 'Resistance'
+                    update_value = True
+                elif keyword == 'resistanceOFF':
+                    field_name = 'Resistance'
+                    update_value = False
+                elif keyword == 'support':
+                    field_name = 'Support'
+                    update_value = True
+                elif keyword == 'supportOFF':
+                    field_name = 'Support'
+                    update_value = False
+                elif keyword == 'TD9buy':
+                    field_name = 'TD9buy'
+                    update_value = True
+                elif keyword == 'TD9buyOFF':
+                    field_name = 'TD9buy'
+                    update_value = False
+                elif keyword == 'TD9sell':
+                    field_name = 'TD9sell'
+                    update_value = True
+                elif keyword == 'TD9sellOFF':  # Corrected keyword
+                    field_name = 'TD9sell'
+                    update_value = False
+                elif keyword == 'up':
+                    field_name = 'Trend'
+                    update_value = 'up'
+                elif keyword == 'down':
+                    field_name = 'Trend'
+                    update_value = 'down'
+                try:
+                    if field_name is not None and update_value is not None:
+                        airtable_operations.update_airtable_field(symbol, field_name, update_value)
+                        app.logger.info(f"Processed update message for symbol: {symbol}")
+                    else:
+                        app.logger.error(f"Unrecognized keyword in update message for symbol: {symbol}: {keyword}")
+                    return '', 200
+                except Exception as e:
+                    app.logger.exception(f"An exception occurred while processing the update message for symbol: {symbol}: {e}")
+                    return 'Error', 500
 
-                if order_type == "long" and trend == "up" and not td9sell_present and snr != "Resistance":
+            elif message_type == 'order':
+                order_type = message_dict.get('order-type')
+                risk = message_dict.get('risk')
+                tp = message_dict.get('tp')
+                sl = message_dict.get('sl')
+                comment = message_dict.get('comment')
+
+                # Get the current server time
+                now = datetime.utcnow().time()
+
+                # Define the start and end of the restricted period in UTC
+                start = time(21, 55)  # 9:55 PM UTC
+                end = time(23, 0)  # 11:00 PM UTC
+
+                # Check if the current time is within the restricted period
+                if start <= now <= end:
+                    return '', 200  # If it is, do not send any commands to PineConnector
+
+                record = airtable_operations.get_matching_record(symbol)
+                if record:
+                    bb_present = record['fields'].get('BB')  # get the BB field
+                    if bb_present:
+                        app.logger.info(f"Order for {symbol} filtered: BB is present")
+                        return '', 200  # if BB is present, do not send command to PineConnector
+
+                if order_type in ['closelong', 'closeshort']:
                     send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
-                elif order_type == "short" and trend == "down" and not td9buy_present and snr != "Support":
-                    send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
 
-            # Add the check for Long# and Short# fields being greater than '0'
-            if order_type == 'long':
-                long_count = int(record['fields'].get('Long#', 0))
-                trend = record['fields'].get('Trend')
-                resistance = record['fields'].get('Resistance', False)
-                td9sell = record['fields'].get('TD9sell', False)
-                # Check if Long# is greater than 0 or if trend is up and no resistance or TD9sell signal is present
-                if long_count > 0 or (trend == 'up' and not resistance and not td9sell):
-                    send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
-                    if long_count == 0:  # Only update if Long# was 0
-                        airtable_operations.update_airtable_field(symbol, 'State Long', 'open')
-                        airtable_operations.increment_airtable_field(symbol, 'Long#')
-            elif order_type == 'short':
-                short_count = int(record['fields'].get('Short#', 0))
-                trend = record['fields'].get('Trend')
-                support = record['fields'].get('Support', False)
-                td9buy = record['fields'].get('TD9buy', False)
-                # Check if Short# is greater than 0 or if trend is down and no support or TD9buy signal is present
-                if short_count > 0 or (trend == 'down' and not support and not td9buy):
-                    send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
-                    if short_count == 0:  # Only update if Short# was 0
-                        airtable_operations.update_airtable_field(symbol, 'State Short', 'open')
-                        airtable_operations.increment_airtable_field(symbol, 'Short#')
-            elif order_type in ['closelong', 'closeshort']:
-                send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
-                airtable_operations.update_airtable_field(symbol, f'State {order_type[5:].capitalize()}', 'closed')
-                airtable_operations.reset_airtable_field(symbol, f'{order_type[5:].capitalize()}#')
+                    state_field = 'State Long' if order_type == 'long' else 'State Short'
+                    state = record['fields'].get(state_field)
+                    trend = record['fields'].get('Trend')
+                    snr = record['fields'].get('SnR')
 
-            return '', 200
+                if config.FILTER_SNR and order_type == "short" and snr == "Support":
+                    app.logger.info(f"Order for {symbol} filtered: SnR is Support")
+                elif config.FILTER_STATE and state != "Ready":
+                    app.logger.info(f"Order for {symbol} filtered: State is not Ready")
+                elif config.FILTER_TREND and ((order_type == "long" and trend != "up") or (order_type == "short" and trend != "down")):
+                    app.logger.info(f"Order for {symbol} filtered: Trend is not correct")
+                else:
+                    send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
+                return '', 200
 
     except Exception as e:
         app.logger.exception(f"An unhandled exception occurred in the webhook function: {e}")
         return 'Error', 500
 
-def send_pineconnector_command(order_type, symbol, risk, tp, sl, comment):
-    if not symbol.endswith('.PRO') and symbol != 'USTEC100':
-        symbol += '.PRO'  # append '.PRO' to the symbol only if it's not already there
-    pineconnector_command = f"{config.PINECONNECTOR_LICENSE_ID},{order_type},{symbol}"
-    if risk:
-        pineconnector_command += f",risk={risk}"
-    if tp:
-        pineconnector_command += f",tp={tp}"
-    if sl:
-        pineconnector_command += f",sl={sl}"
-    if comment:
-        # Directly append the comment without additional quotes
-        pineconnector_command += f',comment={comment}'
-    app.logger.debug(f"Sending PineConnector command: {pineconnector_command}")
-    response = requests.post(config.PINECONNECTOR_WEBHOOK_URL, data=pineconnector_command)
-    app.logger.debug(f"PineConnector response: {response.text}")
+                   
 
-if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5000, debug=True)
+
+
+
+
+#my old  code
+# @app.route('/webhook', methods=['POST'])
+# def webhook():
+#     try:
+#         data = request.data.decode('utf-8')
+#         app.logger.debug(f"Received webhook data: {data}")
+#         parts = data.split(',')
+
+#         # Only include parts that can be split into exactly two items with '='
+#         message_dict = {part.split('=')[0]: part.split('=')[1] for part in parts if '=' in part and len(part.split('=')) == 2}
+#         message_type = message_dict.get('type')
+#         symbol = message_dict.get('symbol')
+#         if symbol in ['NAS100', 'NAS100.PRO']:
+#             symbol = 'USTEC100'
+
+#         if message_type == 'update':
+#             keyword = message_dict.get('keyword')
+#             field_name = None
+#             update_value = None
+#             if keyword == 'resistance':
+#                 field_name = 'Resistance'
+#                 update_value = True
+#             elif keyword == 'resistanceOFF':
+#                 field_name = 'Resistance'
+#                 update_value = False
+#             elif keyword == 'support':
+#                 field_name = 'Support'
+#                 update_value = True
+#             elif keyword == 'supportOFF':
+#                 field_name = 'Support'
+#                 update_value = False
+#             elif keyword == 'TD9buy':
+#                 field_name = 'TD9buy'
+#                 update_value = True
+#             elif keyword == 'TD9buyOFF':
+#                 field_name = 'TD9buy'
+#                 update_value = False
+#             elif keyword == 'TD9sell':
+#                 field_name = 'TD9sell'
+#                 update_value = True
+#             elif keyword == 'TD9sellOFF':  # Corrected keyword
+#                 field_name = 'TD9sell'
+#                 update_value = False
+#             elif keyword == 'up':
+#                 field_name = 'Trend'
+#                 update_value = 'up'
+#             elif keyword == 'down':
+#                 field_name = 'Trend'
+#                 update_value = 'down'
+#             try:
+#                 if field_name is not None and update_value is not None:
+#                     airtable_operations.update_airtable_field(symbol, field_name, update_value)
+#                     app.logger.info(f"Processed update message for symbol: {symbol}")
+#                 else:
+#                     app.logger.error(f"Unrecognized keyword in update message for symbol: {symbol}: {keyword}")
+#                 return '', 200
+#             except Exception as e:
+#                 app.logger.exception(f"An exception occurred while processing the update message for symbol: {symbol}: {e}")
+#                 return 'Error', 500
+#         elif message_type == 'order':
+#             order_type = message_dict.get('order-type')
+#             risk = message_dict.get('risk')
+#             tp = message_dict.get('tp')
+#             sl = message_dict.get('sl')
+#             comment = message_dict.get('comment')
+
+#             # Get the current server time
+#             now = datetime.utcnow().time()
+
+#             # Define the start and end of the restricted period in UTC
+#             start = time(21, 55)  # 9:55 PM UTC
+#             end = time(23, 0)  # 11:00 PM UTC
+
+#             # Check if the current time is within the restricted period
+#             if start <= now <= end:
+#                 return '', 200  # If it is, do not send any commands to PineConnector
+
+#             record = airtable_operations.get_matching_record(symbol)
+#             if record:
+#                 bb_present = record['fields'].get('BB')  # get the BB field
+#                 if bb_present:
+#                     app.logger.info(f"Order for {symbol} filtered: BB is present")
+#                     return '', 200  # if BB is present, do not send command to PineConnector
+
+#             if order_type in ['closelong', 'closeshort']:
+#                 send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
+
+#                 state_field = 'State Long' if order_type == 'long' else 'State Short'
+#                 state = record['fields'].get(state_field)
+#                 trend = record['fields'].get('Trend')
+#                 snr = record['fields'].get('SnR')
+
+#                 if config.FILTER_SNR and order_type == "long" and snr == "Resistance":
+#                     app.logger.info(f"Order for {symbol} filtered: SnR is Resistance")
+
+#                 td9sell_present = record['fields'].get('TD9sell')  # get the TD9sell field for long orders
+#                 td9buy_present = record['fields'].get('TD9buy')  # get the TD9buy field for short orders
+
+#                 if config.FILTER_TD9 and order_type == "long" and td9sell_present:
+#                     app.logger.info(f"Order for {symbol} filtered: TD9sell is present")
+
+#                 if config.FILTER_TREND and order_type == "long" and trend != "up":
+#                     app.logger.info(f"Order for {symbol} filtered: Trend is not up")
+
+#                 if order_type == "long" and trend == "up" and not td9sell_present and snr != "Resistance":
+#                     send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
+#                 elif order_type == "short" and trend == "down" and not td9buy_present and snr != "Support":
+#                     send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
+
+#             # Add the check for Long# and Short# fields being greater than '0'
+#             if order_type == 'long':
+#                 long_count = int(record['fields'].get('Long#', 0))
+#                 trend = record['fields'].get('Trend')
+#                 resistance = record['fields'].get('Resistance', False)
+#                 td9sell = record['fields'].get('TD9sell', False)
+#                 # Check if Long# is greater than 0 or if trend is up and no resistance or TD9sell signal is present
+#                 if long_count > 0 or (trend == 'up' and not resistance and not td9sell):
+#                     send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
+#                     if long_count == 0:  # Only update if Long# was 0
+#                         airtable_operations.update_airtable_field(symbol, 'State Long', 'open')
+#                         airtable_operations.increment_airtable_field(symbol, 'Long#')
+#             elif order_type == 'short':
+#                 short_count = int(record['fields'].get('Short#', 0))
+#                 trend = record['fields'].get('Trend')
+#                 support = record['fields'].get('Support', False)
+#                 td9buy = record['fields'].get('TD9buy', False)
+#                 # Check if Short# is greater than 0 or if trend is down and no support or TD9buy signal is present
+#                 if short_count > 0 or (trend == 'down' and not support and not td9buy):
+#                     send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
+#                     if short_count == 0:  # Only update if Short# was 0
+#                         airtable_operations.update_airtable_field(symbol, 'State Short', 'open')
+#                         airtable_operations.increment_airtable_field(symbol, 'Short#')
+#             elif order_type in ['closelong', 'closeshort']:
+#                 send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
+#                 airtable_operations.update_airtable_field(symbol, f'State {order_type[5:].capitalize()}', 'closed')
+#                 airtable_operations.reset_airtable_field(symbol, f'{order_type[5:].capitalize()}#')
+
+#             return '', 200
+
+#     except Exception as e:
+#         app.logger.exception(f"An unhandled exception occurred in the webhook function: {e}")
+#         return 'Error', 500
+
+# def send_pineconnector_command(order_type, symbol, risk, tp, sl, comment):
+#     if not symbol.endswith('.PRO') and symbol != 'USTEC100':
+#         symbol += '.PRO'  # append '.PRO' to the symbol only if it's not already there
+#     pineconnector_command = f"{config.PINECONNECTOR_LICENSE_ID},{order_type},{symbol}"
+#     if risk:
+#         pineconnector_command += f",risk={risk}"
+#     if tp:
+#         pineconnector_command += f",tp={tp}"
+#     if sl:
+#         pineconnector_command += f",sl={sl}"
+#     if comment:
+#         # Directly append the comment without additional quotes
+#         pineconnector_command += f',comment={comment}'
+#     app.logger.debug(f"Sending PineConnector command: {pineconnector_command}")
+#     response = requests.post(config.PINECONNECTOR_WEBHOOK_URL, data=pineconnector_command)
+#     app.logger.debug(f"PineConnector response: {response.text}")
+
+# if __name__ == "__main__":
+#     app.run(host='0.0.0.0', port=5000, debug=True)
+
