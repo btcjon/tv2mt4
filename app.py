@@ -157,10 +157,10 @@ def webhook():
             elif keyword == 'TD9buy':
                 field_name = 'TD9buy'
                 update_value = True
-            elif keyword == 'TD9buyOn':
+            elif keyword in ['TD9buy', 'TD9buyOn']:
                 field_name = 'TD9buy'
                 update_value = True
-            elif keyword == 'TD9buyOff':
+            elif keyword in ['TD9buyOff']:
                 field_name = 'TD9buy'
                 update_value = False
             elif keyword == 'TD9sell':
