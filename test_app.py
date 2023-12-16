@@ -89,8 +89,24 @@ def test_update_message_trend_down(client):
 
 # Test cases for order messages with all possible order types and conditions
 @pytest.mark.parametrize("order_type, symbol, risk, comment, time_restricted, bb_present, trend, resistance, td9sell, support, td9buy, expected_call_count", [
-    # Add various combinations of parameters to test different scenarios
-    # Example: ('long', 'XAUUSD.PRO', '0.1', 'Sv3-1', False, False, 'up', False, False, False, False, 1),
+    ('long', 'XAUUSD.PRO', '0.1', 'Sv3-1', False, False, 'up', False, False, False, False, 1),
+    ('long', 'XAUUSD.PRO', '0.1', 'Sv3-1', True, False, 'up', False, False, False, False, 0),
+    ('long', 'XAUUSD.PRO', '0.1', 'Sv3-1', False, True, 'up', False, False, False, False, 0),
+    ('long', 'XAUUSD.PRO', '0.1', 'Sv3-1', False, False, 'down', False, False, False, False, 0),
+    ('long', 'XAUUSD.PRO', '0.1', 'Sv3-1', False, False, 'up', True, False, False, False, 0),
+    ('long', 'XAUUSD.PRO', '0.1', 'Sv3-1', False, False, 'up', False, True, False, False, 0),
+    ('short', 'XAUUSD.PRO', '0.1', 'Sv3-1', False, False, 'down', False, False, False, False, 1),
+    ('short', 'XAUUSD.PRO', '0.1', 'Sv3-1', True, False, 'down', False, False, False, False, 0),
+    ('short', 'XAUUSD.PRO', '0.1', 'Sv3-1', False, True, 'down', False, False, False, False, 0),
+    ('short', 'XAUUSD.PRO', '0.1', 'Sv3-1', False, False, 'up', False, False, False, False, 0),
+    ('short', 'XAUUSD.PRO', '0.1', 'Sv3-1', False, False, 'down', False, False, True, False, 0),
+    ('short', 'XAUUSD.PRO', '0.1', 'Sv3-1', False, False, 'down', False, False, False, True, 0),
+    ('closelong', 'XAUUSD.PRO', None, 'Sv3-1', False, False, None, None, None, None, None, 1),
+    ('closelong', 'XAUUSD.PRO', None, 'Sv3-1', True, False, None, None, None, None, None, 0),
+    ('closelong', 'XAUUSD.PRO', None, 'Sv3-1', False, True, None, None, None, None, None, 0),
+    ('closeshort', 'XAUUSD.PRO', None, 'Sv3-1', False, False, None, None, None, None, None, 1),
+    ('closeshort', 'XAUUSD.PRO', None, 'Sv3-1', True, False, None, None, None, None, None, 0),
+    ('closeshort', 'XAUUSD.PRO', None, 'Sv3-1', False, True, None, None, None, None, None, 0),
     # Add more test cases here...
 ])
 @patch.object(AirtableOperations, 'get_matching_record')
@@ -166,5 +182,25 @@ def test_update_message_with_TD9buy(client):
     # Assert that the response status code is 200
     assert response.status_code == 200
     # Additional assertions can be made here, such as checking the response data
+
+# Test cases for update messages with all possible keywords
+@pytest.mark.parametrize("keyword, field, value", [
+    ('resistance', 'Resistance', True),
+    ('resistanceOFF', 'Resistance', False),
+    ('support', 'Support', True),
+    ('supportOFF', 'Support', False),
+    ('TD9buy', 'TD9buy', True),
+    ('TD9buyOFF', 'TD9buy', False),
+    ('TD9sell', 'TD9sell', True),
+    ('TD9sellOFF', 'TD9sell', False),
+    ('up', 'Trend', 'up'),
+    ('down', 'Trend', 'down'),
+])
+def test_update_messages(client, keyword, field, value):
+    data = f'type=update,symbol=XAGUSD,keyword={keyword}'
+    with patch.object(AirtableOperations, 'update_airtable_field') as mock_update_airtable_field:
+        response = client.post('/webhook', data=data)
+        assert response.status_code == 200
+        mock_update_airtable_field.assert_called_once_with('XAGUSD', field, value)
 
 # More test cases can be added here to cover different scenarios and message formats
