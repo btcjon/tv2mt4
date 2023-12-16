@@ -231,9 +231,9 @@ def webhook():
         app.logger.exception(f"An unhandled exception occurred in the webhook function: {e}")
         return 'Error', 500
 
-def send_pineconnector_command(order_type, symbol, risk=None, tp=None, sl=None, comment=None):
-    # Format the PineConnector command based on the provided parameters
-    command_parts = [config.PINECONNECTOR_LICENSE_ID, order_type, symbol]
+def send_pineconnector_command(order_id, order_type, symbol, risk=None, tp=None, sl=None, comment=None):
+    # Format the PineConnector command based on the provided parameters, including the order ID
+    command_parts = [order_id, order_type, symbol]
     if risk:
         command_parts.append(f"risk={risk}")
     if tp:
@@ -253,7 +253,8 @@ if __name__ == "__main__":
 def parse_new_order_format(data):
     # Split the data by commas and extract the parts
     parts = data.split(',')
-    # The first part is the ID, which we will ignore for now
+    # Extract the ID, order type, and symbol
+    order_id = parts[0]
     order_type = parts[1]
     symbol = parts[2]
     # Initialize optional parameters
@@ -271,5 +272,5 @@ def parse_new_order_format(data):
             sl = part.split('=')[1]
         elif part.startswith('comment='):
             comment = part.split('=')[1].strip('”"')  # Remove any quotation marks
-    # Call the send_pineconnector_command function with the extracted information
-    send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
+    # Call the send_pineconnector_command function with the extracted information and include the order ID
+    send_pineconnector_command(order_id, order_type, symbol, risk, tp, sl, comment)
