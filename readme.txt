@@ -95,23 +95,52 @@ Only found in type=order messages
         example3: type=order,order-type=long,symbol=EURNZD.PRO,risk=1,tp=0.08,comment="7-0-30"
         example4: type=order,order-type=long,symbol=EURNZD.PRO,risk=1,tp=0.08,sl=0.1,comment="7-0-30"
 
+
+
 Handling type=order messages:
 
 type=order messages are meant to be sent to pineconnector ONLY if they pass the following conditions:
 
-Time Restriction: NONE should ever be sent to pineconnector during this time:
-    # Get the current server time
-    now = datetime.utcnow().time()
+config.py will determine if the condition is "true" or "false" 
+    if set to true, then condition must be met. If false, you can ignore the condition.
 
-    # Define the start and end of the restricted period in UTC
-    start = time(21, 55)  # 9:55 PM UTC
-    end = time(23, 0)  # 11:00 PM UTC
+List of conditions in config.py 
 
-    # Check if the current time is within the restricted period
-    if start <= now <= end:
-        return  # If it is, do not send any commands to PineConnector
+    CHECK_STATE = True
 
-BB Restriction: NONE should ever be sent is 'BB' is present in 'State Long'  or 'State Short' fields
+        If 'long' check 'State Long', if there is 'BB' then do not send
+        If 'short' check 'State Short', if there is 'BB' then do not send
+
+       
+    FILTER_SNR = True
+
+        If 'long' order type then 'Resistance' must be 'false'
+        If 'short' order type then 'Support' must be 'false'
+
+    FILTER_TD9 = True
+
+        If 'long' order type then TD9sell must be 'false'
+        If 'short' order type then TD9buy must be 'false'
+
+    FILTER_TREND = True
+
+        If 'long' order type then Trend must be 'up'
+        If 'short' order type then Trend must be 'down'
+    
+    FILTER_TIME = True
+
+        Time Restriction: NONE should ever be sent to pineconnector during this time:
+            # Get the current server time
+            now = datetime.utcnow().time()
+
+            # Define the start and end of the restricted period in UTC
+            start = time(21, 55)  # 9:55 PM UTC
+            end = time(23, 0)  # 11:00 PM UTC
+
+            # Check if the current time is within the restricted period
+            if start <= now <= end:
+                return  # If it is, do not send any commands to PineConnector
+
 
     order-type=closelong = send immediately if passes Time Restriction and BB Restriction
         MUST be sent to pineconnector in following format (raw text): ID,closelong,symbol,comment
@@ -154,3 +183,22 @@ Long#
 Short#
     1. if order-type=short was sent, increment the number by '1'
     2. if order-type=closeshort was sent, change number to '0'
+
+
+
+Additional Order Type messages that we need to add logic to handle
+
+the string below is order-type=long but our logic is not yet capable of parsing it correctly
+6700960415957,long,XAUUSD.PRO,risk=0.1,comment=”Sv3-1”
+
+the string below is order-type=short but our logic is not yet capable of parsing it correctly
+6700960415957,short,XAUUSD.PRO,risk=0.1,comment=”Sv3-1”
+
+the string below is order-type=closelong but our logic is not yet capable of parsing it correctly
+6700960415957,closelong,XAUUSD.PRO,comment=”Sv3-1”
+
+the string below is order-type=closeshort but our logic is not yet capable of parsing it correctly
+6700960415957,closeshort,XAUUSD.PRO,comment=”Sv3-1”
+
+Refactor code to recognize the messages above, parse them correctly, and send them to pineconnector correctly without breaking current code or logic.
+
