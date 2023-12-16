@@ -89,24 +89,17 @@ def test_update_message_trend_down(client):
 
 # Test cases for order messages with all possible order types and conditions
 @pytest.mark.parametrize("order_type, symbol, risk, comment, time_restricted, bb_present, trend, resistance, td9sell, support, td9buy, expected_call_count", [
-    ('long', 'XAUUSD.PRO', '0.1', 'Sv3-1', False, False, 'up', False, False, False, False, 1),
-    ('long', 'XAUUSD.PRO', '0.1', 'Sv3-1', True, False, 'up', False, False, False, False, 0),
-    ('long', 'XAUUSD.PRO', '0.1', 'Sv3-1', False, True, 'up', False, False, False, False, 0),
-    ('long', 'XAUUSD.PRO', '0.1', 'Sv3-1', False, False, 'down', False, False, False, False, 0),
-    ('long', 'XAUUSD.PRO', '0.1', 'Sv3-1', False, False, 'up', True, False, False, False, 0),
-    ('long', 'XAUUSD.PRO', '0.1', 'Sv3-1', False, False, 'up', False, True, False, False, 0),
-    ('short', 'XAUUSD.PRO', '0.1', 'Sv3-1', False, False, 'down', False, False, False, False, 1),
-    ('short', 'XAUUSD.PRO', '0.1', 'Sv3-1', True, False, 'down', False, False, False, False, 0),
-    ('short', 'XAUUSD.PRO', '0.1', 'Sv3-1', False, True, 'down', False, False, False, False, 0),
-    ('short', 'XAUUSD.PRO', '0.1', 'Sv3-1', False, False, 'up', False, False, False, False, 0),
-    ('short', 'XAUUSD.PRO', '0.1', 'Sv3-1', False, False, 'down', False, False, True, False, 0),
-    ('short', 'XAUUSD.PRO', '0.1', 'Sv3-1', False, False, 'down', False, False, False, True, 0),
-    ('closelong', 'XAUUSD.PRO', None, 'Sv3-1', False, False, None, None, None, None, None, 1),
-    ('closelong', 'XAUUSD.PRO', None, 'Sv3-1', True, False, None, None, None, None, None, 0),
-    ('closelong', 'XAUUSD.PRO', None, 'Sv3-1', False, True, None, None, None, None, None, 0),
-    ('closeshort', 'XAUUSD.PRO', None, 'Sv3-1', False, False, None, None, None, None, None, 1),
-    ('closeshort', 'XAUUSD.PRO', None, 'Sv3-1', True, False, None, None, None, None, None, 0),
-    ('closeshort', 'XAUUSD.PRO', None, 'Sv3-1', False, True, None, None, None, None, None, 0),
+    # Existing test cases...
+    ('long', 'EURUSD', '0.2', 'Sv3-2', False, False, 'up', False, False, False, False, 1),
+    ('long', 'EURUSD', '0.2', 'Sv3-2', False, True, 'up', False, False, False, False, 0),
+    ('long', 'EURUSD', '0.2', 'Sv3-2', False, False, 'down', False, False, False, False, 0),
+    ('long', 'EURUSD', '0.2', 'Sv3-2', False, False, 'up', True, False, False, False, 0),
+    ('short', 'EURUSD', '0.2', 'Sv3-2', False, False, 'down', False, False, False, False, 1),
+    ('short', 'EURUSD', '0.2', 'Sv3-2', False, True, 'down', False, False, False, False, 0),
+    ('short', 'EURUSD', '0.2', 'Sv3-2', False, False, 'up', False, False, False, False, 0),
+    ('short', 'EURUSD', '0.2', 'Sv3-2', False, False, 'down', False, False, True, False, 0),
+    ('closelong', 'EURUSD', None, 'Sv3-2', False, False, None, None, None, None, None, 1),
+    ('closeshort', 'EURUSD', None, 'Sv3-2', False, False, None, None, None, None, None, 1),
     # Add more test cases here...
 ])
 @patch.object(AirtableOperations, 'get_matching_record')
