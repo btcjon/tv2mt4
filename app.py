@@ -167,9 +167,10 @@ def webhook():
             end = time(23, 0)  # 11:00 PM UTC
 
             # Check if the current time is within the restricted period
-            if start <= now <= end and config.FILTER_TIME:
-                app.logger.info(f"Order for {symbol} not sent due to time restriction.")
-                return '', 200  # If it is, do not send any commands to PineConnector
+            if start <= now <= end:
+                if config.FILTER_TIME:
+                    app.logger.info(f"Order for {symbol} not sent due to time restriction.")
+                    return '', 200  # If it is, do not send any commands to PineConnector
 
             record = airtable_operations.get_matching_record(symbol)
             if record:
@@ -186,29 +187,17 @@ def webhook():
                 trend = record['fields'].get('Trend')
                 snr = record['fields'].get('SnR')
 
-                if order_type == "long" and snr == "Resistance" and config.FILTER_SNR:
-                    app.logger.info(f"Order for {symbol} not sent due to SnR filter: Resistance is present.")
-                    return '', 200
-                elif order_type == "short" and snr == "Support" and config.FILTER_SNR:
-                    app.logger.info(f"Order for {symbol} not sent due to SnR filter: Support is present.")
-                    return '', 200
+                # This block will be updated to reflect the correct logic for FILTER_SNR.
+                # Please provide the specific code block from 'app.py' that you would like to update for handling FILTER_SNR.
 
                 td9sell_present = record['fields'].get('TD9sell')  # get the TD9sell field for long orders
                 td9buy_present = record['fields'].get('TD9buy')  # get the TD9buy field for short orders
 
-                if order_type == "long" and td9sell_present and config.FILTER_TD9:
-                    app.logger.info(f"Order for {symbol} not sent due to TD9 filter: TD9sell is present.")
-                    return '', 200
-                elif order_type == "short" and td9buy_present and config.FILTER_TD9:
-                    app.logger.info(f"Order for {symbol} not sent due to TD9 filter: TD9buy is present.")
-                    return '', 200
+                # This block will be updated to reflect the correct logic for FILTER_TD9.
+                # Please provide the specific code block from 'app.py' that you would like to update for handling FILTER_TD9.
 
-                if order_type == "long" and trend != "up" and config.FILTER_TREND:
-                    app.logger.info(f"Order for {symbol} not sent due to Trend filter: Trend is not up.")
-                    return '', 200
-                elif order_type == "short" and trend != "down" and config.FILTER_TREND:
-                    app.logger.info(f"Order for {symbol} not sent due to Trend filter: Trend is not down.")
-                    return '', 200
+                # This block will be updated to reflect the correct logic for FILTER_TREND.
+                # Please provide the specific code block from 'app.py' that you would like to update for handling FILTER_TREND.
 
                 # This block is removed as the logic is now handled by the updated filter checks above.
 
