@@ -78,10 +78,22 @@ class AirtableOperations:
 airtable_operations = AirtableOperations()
 
 @app.route('/webhook', methods=['POST'])
+def parse_new_order_format(data):
+    # This function will parse the new order format and return the extracted information
+    # TODO: Implement the parsing logic here
+    pass
+
 def webhook():
     try:
         data = request.data.decode('utf-8')
         app.logger.debug(f"Received webhook data: {data}")
+
+        # Check if the message starts with an ID and an order type
+        if re.match(r'^\d+,(long|short|closelong|closeshort),', data):
+            # Handle the new message format
+            parse_new_order_format(data)
+            return '', 200
+
         parts = data.split(',')
 
         # Only include parts that can be split into exactly two items with '='
@@ -219,22 +231,45 @@ def webhook():
         app.logger.exception(f"An unhandled exception occurred in the webhook function: {e}")
         return 'Error', 500
 
-def send_pineconnector_command(order_type, symbol, risk, tp, sl, comment):
-    if not symbol.endswith('.PRO') and symbol != 'USTEC100':
-        symbol += '.PRO'  # append '.PRO' to the symbol only if it's not already there
-    pineconnector_command = f"{config.PINECONNECTOR_LICENSE_ID},{order_type},{symbol}"
+def send_pineconnector_command(order_type, symbol, risk=None, tp=None, sl=None, comment=None):
+    # Format the PineConnector command based on the provided parameters
+    command_parts = [config.PINECONNECTOR_LICENSE_ID, order_type, symbol]
     if risk:
-        pineconnector_command += f",risk={risk}"
+        command_parts.append(f"risk={risk}")
     if tp:
-        pineconnector_command += f",tp={tp}"
+        command_parts.append(f"tp={tp}")
     if sl:
-        pineconnector_command += f",sl={sl}"
+        command_parts.append(f"sl={sl}")
     if comment:
-        # Directly append the comment without additional quotes
-        pineconnector_command += f',comment={comment}'
+        command_parts.append(f'comment="{comment}"')  # Ensure the comment is enclosed in quotes
+    pineconnector_command = ','.join(command_parts)
     app.logger.debug(f"Sending PineConnector command: {pineconnector_command}")
-    response = requests.post(config.PINECONNECTOR_WEBHOOK_URL, data=pineconnector_command)
+    # Send the command to PineConnector
+    response = requests.post(config.PINECONNECTOR_WEBHOOK_URL, data=pineconnector_command.encode('utf-8'))
     app.logger.debug(f"PineConnector response: {response.text}")
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=True)
+def parse_new_order_format(data):
+    # Split the data by commas and extract the parts
+    parts = data.split(',')
+    # The first part is the ID, which we will ignore for now
+    order_type = parts[1]
+    symbol = parts[2]
+    # Initialize optional parameters
+    risk = None
+    tp = None
+    sl = None
+    comment = None
+    # Iterate over the remaining parts to extract optional parameters
+    for part in parts[3:]:
+        if part.startswith('risk='):
+            risk = part.split('=')[1]
+        elif part.startswith('tp='):
+            tp = part.split('=')[1]
+        elif part.startswith('sl='):
+            sl = part.split('=')[1]
+        elif part.startswith('comment='):
+            comment = part.split('=')[1].strip('”"')  # Remove any quotation marks
+    # Call the send_pineconnector_command function with the extracted information
+    send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
