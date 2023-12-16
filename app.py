@@ -78,6 +78,36 @@ class AirtableOperations:
 
 airtable_operations = AirtableOperations()
 
+def parse_new_order_format(data):
+    # Use regular expression to parse the new order format
+    match = re.match(r'^(\d+),(long|short|closelong|closeshort),([^,]+)(,.+)?$', data)
+    if match:
+        order_id = match.group(1)
+        order_type = match.group(2)
+        symbol = match.group(3)
+        # Initialize optional parameters
+        risk = None
+        tp = None
+        sl = None
+        comment = None
+        # Extract the optional parameters if present
+        optional_params = match.group(4)
+        if optional_params:
+            optional_parts = optional_params.split(',')
+            for part in optional_parts:
+                if '=' in part:
+                    key, value = part.split('=')
+                    if key == 'risk':
+                        risk = value
+                    elif key == 'tp':
+                        tp = value
+                    elif key == 'sl':
+                        sl = value
+                    elif key == 'comment':
+                        comment = value.strip('”"')  # Remove any quotation marks
+        # Call the send_pineconnector_command function with the extracted information and include the order ID
+        send_pineconnector_command(order_id, order_type, symbol, risk, tp, sl, comment)
+
 @app.route('/webhook', methods=['POST'])
 def webhook():
     try:
