@@ -186,7 +186,7 @@ Short#
 
 
 
-Additional Order Type messages that we need to add logic to handle
+Additional Order Type messages that we need to add logic to handle (refactoring done. see notes below)
 
 the string below is order-type=long but our logic is not yet capable of parsing it correctly
 6700960415957,long,XAUUSD.PRO,risk=0.1,comment=”Sv3-1”

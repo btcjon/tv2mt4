@@ -1,4 +1,3 @@
 flask
 requests
 airtable-python-wrapper
-airtable-python-wrapper

@@ -8,3 +8,4 @@ CHECK_STATE = True
 FILTER_SNR = False
 FILTER_TD9 = False
 FILTER_TREND = True
+FILTER_TIME = True
