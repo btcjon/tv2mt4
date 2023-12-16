@@ -112,4 +112,13 @@ def test_new_order_format_closeshort(client):
     response = client.post('/webhook', data=data)
     assert response.status_code == 200
 
+def test_update_message_with_TD9buy(client):
+    # Define the message data for an update message with TD9buy keyword
+    data = 'type=update,symbol=XAGUSD,keyword=TD9buy'
+    # Simulate a POST request to the webhook endpoint
+    response = client.post('/webhook', data=data)
+    # Assert that the response status code is 200
+    assert response.status_code == 200
+    # Additional assertions can be made here, such as checking the response data
+
 # More test cases can be added here to cover different scenarios and message formats
