@@ -202,3 +202,11 @@ the string below is order-type=closeshort but our logic is not yet capable of pa
 
 Refactor code to recognize the messages above, parse them correctly, and send them to pineconnector correctly without breaking current code or logic.
 
+Refactoring Notes:
+- The `webhook()` function has been updated to handle both the old and new message formats.
+- A new function `parse_new_order_format()` has been created to parse the new message format.
+- The `send_pineconnector_command()` function has been updated to include the order ID in the command for the new message format.
+- Filters for time restrictions, SNR, TD9, and trend checks have been implemented based on the settings in `config.py`.
+- Airtable fields are updated conditionally after a successful command is sent to PineConnector.
+- Logic for handling `closelong` and `closeshort` order types has been updated to consider Time and BB restrictions before sending commands to PineConnector.
+
