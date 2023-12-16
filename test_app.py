@@ -34,4 +34,82 @@ def test_order_message_closelong(client):
     assert response.status_code == 200
     # Additional assertions can be made here
 
+# Test cases for update messages
+def test_update_message_resistance_on(client):
+    data = 'type=update,symbol=XAGUSD,keyword=resistance'
+    response = client.post('/webhook', data=data)
+    assert response.status_code == 200
+
+def test_update_message_resistance_off(client):
+    data = 'type=update,symbol=XAGUSD,keyword=resistanceOFF'
+    response = client.post('/webhook', data=data)
+    assert response.status_code == 200
+
+def test_update_message_support_on(client):
+    data = 'type=update,symbol=XAGUSD,keyword=support'
+    response = client.post('/webhook', data=data)
+    assert response.status_code == 200
+
+def test_update_message_support_off(client):
+    data = 'type=update,symbol=XAGUSD,keyword=supportOFF'
+    response = client.post('/webhook', data=data)
+    assert response.status_code == 200
+
+def test_update_message_TD9sell_on(client):
+    data = 'type=update,symbol=XAGUSD,keyword=TD9sell'
+    response = client.post('/webhook', data=data)
+    assert response.status_code == 200
+
+def test_update_message_TD9sell_off(client):
+    data = 'type=update,symbol=XAGUSD,keyword=TD9sellOFF'
+    response = client.post('/webhook', data=data)
+    assert response.status_code == 200
+
+def test_update_message_trend_up(client):
+    data = 'type=update,symbol=XAGUSD,keyword=up'
+    response = client.post('/webhook', data=data)
+    assert response.status_code == 200
+
+def test_update_message_trend_down(client):
+    data = 'type=update,symbol=XAGUSD,keyword=down'
+    response = client.post('/webhook', data=data)
+    assert response.status_code == 200
+
+# Test cases for order messages
+def test_order_message_short(client):
+    data = 'type=order,order-type=short,symbol=XAUUSD.PRO,risk=0.1,comment="Sv3-1"'
+    response = client.post('/webhook', data=data)
+    assert response.status_code == 200
+
+def test_order_message_closeshort(client):
+    data = 'type=order,order-type=closeshort,symbol=XAUUSD.PRO,comment="Sv3-1"'
+    response = client.post('/webhook', data=data)
+    assert response.status_code == 200
+
+def test_order_message_with_tp_sl(client):
+    data = 'type=order,order-type=long,symbol=XAUUSD.PRO,risk=1,tp=0.08,sl=0.1,comment="7-0-30"'
+    response = client.post('/webhook', data=data)
+    assert response.status_code == 200
+
+# Test cases for new order format
+def test_new_order_format_long(client):
+    data = '6700960415957,long,XAUUSD.PRO,risk=0.1,comment="Sv3-1"'
+    response = client.post('/webhook', data=data)
+    assert response.status_code == 200
+
+def test_new_order_format_short(client):
+    data = '6700960415957,short,XAUUSD.PRO,risk=0.1,comment="Sv3-1"'
+    response = client.post('/webhook', data=data)
+    assert response.status_code == 200
+
+def test_new_order_format_closelong(client):
+    data = '6700960415957,closelong,XAUUSD.PRO,comment="Sv3-1"'
+    response = client.post('/webhook', data=data)
+    assert response.status_code == 200
+
+def test_new_order_format_closeshort(client):
+    data = '6700960415957,closeshort,XAUUSD.PRO,comment="Sv3-1"'
+    response = client.post('/webhook', data=data)
+    assert response.status_code == 200
+
 # More test cases can be added here to cover different scenarios and message formats
