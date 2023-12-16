@@ -167,7 +167,8 @@ def webhook():
             end = time(23, 0)  # 11:00 PM UTC
 
             # Check if the current time is within the restricted period
-            if config.FILTER_TIME and start <= now <= end:
+            if start <= now <= end and config.FILTER_TIME:
+                app.logger.info(f"Order for {symbol} not sent due to time restriction.")
                 return '', 200  # If it is, do not send any commands to PineConnector
 
             record = airtable_operations.get_matching_record(symbol)
@@ -185,22 +186,31 @@ def webhook():
                 trend = record['fields'].get('Trend')
                 snr = record['fields'].get('SnR')
 
-                if config.FILTER_SNR and order_type == "long" and snr == "Resistance":
-                    app.logger.info(f"Order for {symbol} filtered: SnR is Resistance")
+                if order_type == "long" and snr == "Resistance" and config.FILTER_SNR:
+                    app.logger.info(f"Order for {symbol} not sent due to SnR filter: Resistance is present.")
+                    return '', 200
+                elif order_type == "short" and snr == "Support" and config.FILTER_SNR:
+                    app.logger.info(f"Order for {symbol} not sent due to SnR filter: Support is present.")
+                    return '', 200
 
                 td9sell_present = record['fields'].get('TD9sell')  # get the TD9sell field for long orders
                 td9buy_present = record['fields'].get('TD9buy')  # get the TD9buy field for short orders
 
-                if config.FILTER_TD9 and order_type == "long" and td9sell_present:
-                    app.logger.info(f"Order for {symbol} filtered: TD9sell is present")
+                if order_type == "long" and td9sell_present and config.FILTER_TD9:
+                    app.logger.info(f"Order for {symbol} not sent due to TD9 filter: TD9sell is present.")
+                    return '', 200
+                elif order_type == "short" and td9buy_present and config.FILTER_TD9:
+                    app.logger.info(f"Order for {symbol} not sent due to TD9 filter: TD9buy is present.")
+                    return '', 200
 
-                if config.FILTER_TREND and order_type == "long" and trend != "up":
-                    app.logger.info(f"Order for {symbol} filtered: Trend is not up")
+                if order_type == "long" and trend != "up" and config.FILTER_TREND:
+                    app.logger.info(f"Order for {symbol} not sent due to Trend filter: Trend is not up.")
+                    return '', 200
+                elif order_type == "short" and trend != "down" and config.FILTER_TREND:
+                    app.logger.info(f"Order for {symbol} not sent due to Trend filter: Trend is not down.")
+                    return '', 200
 
-                if order_type == "long" and trend == "up" and not td9sell_present and snr != "Resistance":
-                    send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
-                elif order_type == "short" and trend == "down" and not td9buy_present and snr != "Support":
-                    send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
+                # This block is removed as the logic is now handled by the updated filter checks above.
 
             # Add the check for Long# and Short# fields being greater than '0'
             if order_type == 'long':
