@@ -1,3 +1,4 @@
+import re
 from flask import Flask, request
 import logging
 import requests
@@ -78,11 +79,6 @@ class AirtableOperations:
 airtable_operations = AirtableOperations()
 
 @app.route('/webhook', methods=['POST'])
-def parse_new_order_format(data):
-    # This function will parse the new order format and return the extracted information
-    # TODO: Implement the parsing logic here
-    pass
-
 def webhook():
     try:
         data = request.data.decode('utf-8')
@@ -93,6 +89,15 @@ def webhook():
             # Handle the new message format
             parse_new_order_format(data)
             return '', 200
+        else:
+            # Handle the old message format
+            parts = data.split(',')
+
+            # Only include parts that can be split into exactly two items with '='
+            message_dict = {part.split('=')[0]: part.split('=')[1] for part in parts if '=' in part and len(part.split('=')) == 2}
+            message_type = message_dict.get('type')
+            symbol = message_dict.get('symbol')
+            # ... (rest of the existing code remains unchanged)
 
         parts = data.split(',')
 
@@ -251,26 +256,31 @@ def send_pineconnector_command(order_id, order_type, symbol, risk=None, tp=None,
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=True)
 def parse_new_order_format(data):
-    # Split the data by commas and extract the parts
-    parts = data.split(',')
-    # Extract the ID, order type, and symbol
-    order_id = parts[0]
-    order_type = parts[1]
-    symbol = parts[2]
-    # Initialize optional parameters
-    risk = None
-    tp = None
-    sl = None
-    comment = None
-    # Iterate over the remaining parts to extract optional parameters
-    for part in parts[3:]:
-        if part.startswith('risk='):
-            risk = part.split('=')[1]
-        elif part.startswith('tp='):
-            tp = part.split('=')[1]
-        elif part.startswith('sl='):
-            sl = part.split('=')[1]
-        elif part.startswith('comment='):
-            comment = part.split('=')[1].strip('”"')  # Remove any quotation marks
-    # Call the send_pineconnector_command function with the extracted information and include the order ID
-    send_pineconnector_command(order_id, order_type, symbol, risk, tp, sl, comment)
+    # Use regular expression to parse the new order format
+    match = re.match(r'^(\d+),(long|short|closelong|closeshort),([^,]+)(,.+)?$', data)
+    if match:
+        order_id = match.group(1)
+        order_type = match.group(2)
+        symbol = match.group(3)
+        # Initialize optional parameters
+        risk = None
+        tp = None
+        sl = None
+        comment = None
+        # Extract the optional parameters if present
+        optional_params = match.group(4)
+        if optional_params:
+            optional_parts = optional_params.split(',')
+            for part in optional_parts:
+                if '=' in part:
+                    key, value = part.split('=')
+                    if key == 'risk':
+                        risk = value
+                    elif key == 'tp':
+                        tp = value
+                    elif key == 'sl':
+                        sl = value
+                    elif key == 'comment':
+                        comment = value.strip('”"')  # Remove any quotation marks
+        # Call the send_pineconnector_command function with the extracted information and include the order ID
+        send_pineconnector_command(order_id, order_type, symbol, risk, tp, sl, comment)
