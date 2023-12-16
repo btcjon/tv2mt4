@@ -179,29 +179,31 @@ def webhook():
                     app.logger.info(f"Order for {symbol} filtered: BB is present")
                     return '', 200  # if BB is present, do not send command to PineConnector
 
+            # Check for closelong and closeshort order types
             if order_type in ['closelong', 'closeshort']:
+                # Get the current server time
+                now = datetime.utcnow().time()
+
+                # Define the start and end of the restricted period in UTC
+                start = time(21, 55)  # 9:55 PM UTC
+                end = time(23, 0)  # 11:00 PM UTC
+
+                # Check if the current time is within the restricted period
+                if start <= now <= end and config.FILTER_TIME:
+                    app.logger.info(f"Order for {symbol} not sent due to time restriction.")
+                    return '', 200  # If it is, do not send any commands to PineConnector
+
+                # Check for BB (State) restriction
+                state_field = 'State Long' if order_type == 'closelong' else 'State Short'
+                record = airtable_operations.get_matching_record(symbol)
+                if record and record['fields'].get(state_field) == 'BB':
+                    app.logger.info(f"Order for {symbol} not sent due to BB restriction.")
+                    return '', 200  # If BB is present, do not send command to PineConnector
+
+                # If both checks pass, send the command to PineConnector
                 send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
-
-                state_field = 'State Long' if order_type == 'long' else 'State Short'
-                state = record['fields'].get(state_field)
-                trend = record['fields'].get('Trend')
-                snr = record['fields'].get('SnR')
-
-                # This block will be updated to reflect the correct logic for FILTER_SNR.
-                # Please provide the specific code block from 'app.py' that you would like to update for handling FILTER_SNR.
-
-                td9sell_present = record['fields'].get('TD9sell')  # get the TD9sell field for long orders
-                td9buy_present = record['fields'].get('TD9buy')  # get the TD9buy field for short orders
-
-                # This block will be updated to reflect the correct logic for FILTER_TD9.
-                # Please provide the specific code block from 'app.py' that you would like to update for handling FILTER_TD9.
-
-                # This block will be updated to reflect the correct logic for FILTER_TREND.
-                # Please provide the specific code block from 'app.py' that you would like to update for handling FILTER_TREND.
-
-                # This block is removed as the logic is now handled by the updated filter checks above.
-
-            # Add the check for Long# and Short# fields being greater than '0'
+                airtable_operations.update_airtable_field(symbol, f'State {order_type[5:].capitalize()}', 'closed')
+                airtable_operations.reset_airtable_field(symbol, f'{order_type[5:].capitalize()}#')
             if order_type == 'long':
                 long_count = int(record['fields'].get('Long#', 0))
                 trend = record['fields'].get('Trend')
