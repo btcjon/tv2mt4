@@ -204,26 +204,50 @@ def webhook():
                 send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
                 airtable_operations.update_airtable_field(symbol, f'State {order_type[5:].capitalize()}', 'closed')
                 airtable_operations.reset_airtable_field(symbol, f'{order_type[5:].capitalize()}#')
-            if order_type == 'long':
+            if order_type == 'long' and record:
                 long_count = int(record['fields'].get('Long#', 0))
-                trend = record['fields'].get('Trend')
-                resistance = record['fields'].get('Resistance', False)
-                td9sell = record['fields'].get('TD9sell', False)
-                # Check if Long# is greater than 0 or if trend is up and no resistance or TD9sell signal is present
-                if long_count > 0 or (trend == 'up' and not resistance and not td9sell):
+                if long_count > 0:
+                    # Long# is greater than 0, send command immediately
                     send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
-                    if long_count == 0:  # Only update if Long# was 0
+                    airtable_operations.update_airtable_field(symbol, 'State Long', 'open')
+                    airtable_operations.increment_airtable_field(symbol, 'Long#')
+                else:
+                    # Apply filters
+                    trend = record['fields'].get('Trend')
+                    resistance = record['fields'].get('Resistance', False)
+                    td9sell = record['fields'].get('TD9sell', False)
+                    if config.FILTER_TREND and trend != 'up':
+                        app.logger.info(f"Order for {symbol} filtered: Trend is not up")
+                    elif config.FILTER_SNR and resistance:
+                        app.logger.info(f"Order for {symbol} filtered: Resistance is present")
+                    elif config.FILTER_TD9 and td9sell:
+                        app.logger.info(f"Order for {symbol} filtered: TD9sell is present")
+                    else:
+                        # All filters passed, send command
+                        send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
                         airtable_operations.update_airtable_field(symbol, 'State Long', 'open')
                         airtable_operations.increment_airtable_field(symbol, 'Long#')
-            elif order_type == 'short':
+            elif order_type == 'short' and record:
                 short_count = int(record['fields'].get('Short#', 0))
-                trend = record['fields'].get('Trend')
-                support = record['fields'].get('Support', False)
-                td9buy = record['fields'].get('TD9buy', False)
-                # Check if Short# is greater than 0 or if trend is down and no support or TD9buy signal is present
-                if short_count > 0 or (trend == 'down' and not support and not td9buy):
+                if short_count > 0:
+                    # Short# is greater than 0, send command immediately
                     send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
-                    if short_count == 0:  # Only update if Short# was 0
+                    airtable_operations.update_airtable_field(symbol, 'State Short', 'open')
+                    airtable_operations.increment_airtable_field(symbol, 'Short#')
+                else:
+                    # Apply filters
+                    trend = record['fields'].get('Trend')
+                    support = record['fields'].get('Support', False)
+                    td9buy = record['fields'].get('TD9buy', False)
+                    if config.FILTER_TREND and trend != 'down':
+                        app.logger.info(f"Order for {symbol} filtered: Trend is not down")
+                    elif config.FILTER_SNR and support:
+                        app.logger.info(f"Order for {symbol} filtered: Support is present")
+                    elif config.FILTER_TD9 and td9buy:
+                        app.logger.info(f"Order for {symbol} filtered: TD9buy is present")
+                    else:
+                        # All filters passed, send command
+                        send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
                         airtable_operations.update_airtable_field(symbol, 'State Short', 'open')
                         airtable_operations.increment_airtable_field(symbol, 'Short#')
             elif order_type in ['closelong', 'closeshort']:
