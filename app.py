@@ -160,10 +160,22 @@ def webhook():
                     app.logger.info(f"Order for {symbol} filtered: BB is present")
                     return '', 200  # if BB is present, do not send command to PineConnector
 
-            if order_type == 'closelong' or order_type == 'closeshort':
-                send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
-                airtable_operations.update_airtable_field(symbol, f'State {order_type[5:].capitalize()}', 'closed')
-                airtable_operations.reset_airtable_field(symbol, f'{order_type[5:].capitalize()}#')
+            # Check for closelong and closeshort order types
+            if order_type in ['closelong', 'closeshort']:
+                # Check for Time Restriction and BB Restriction
+                if start <= now <= end:
+                    app.logger.info(f"Order for {symbol} filtered: Time Restriction")
+                else:
+                    record = airtable_operations.get_matching_record(symbol)
+                    if record:
+                        state_field = f'State {order_type[5:].capitalize()}'
+                        bb_present = record['fields'].get('BB', False)
+                        if bb_present:
+                            app.logger.info(f"Order for {symbol} filtered: BB is present in {state_field}")
+                        else:
+                            send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
+                            airtable_operations.update_airtable_field(symbol, state_field, 'closed')
+                            airtable_operations.reset_airtable_field(symbol, f'{order_type[5:].capitalize()}#')
 
             # Add the check for Long# and Short# fields being greater than '0'
             if order_type == 'long':
