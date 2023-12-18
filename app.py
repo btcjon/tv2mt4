@@ -26,10 +26,11 @@ class AirtableOperations:
     def update_airtable_field(self, symbol, field, value):
         try:
             record = self.get_matching_record(symbol)
-            self.logger.debug(f"Attempting to update {field} for {symbol} to {value}")
+            action = 'update' if value not in [False, None] else 'clear'
+            self.logger.debug(f"Attempting to {action} {field} for {symbol} to {value}")
             if record:
                 self.airtable.update(record['id'], {field: value})
-                self.logger.info(f"Successfully updated {field} for {symbol} to {value} in Airtable")
+                self.logger.info(f"Successfully {action}d {field} for {symbol} to {value} in Airtable")
             else:
                 self.logger.warning(f"No matching record found for symbol: {symbol}")
         except requests.exceptions.ConnectionError as e:
@@ -37,7 +38,7 @@ class AirtableOperations:
             time.sleep(5)  # Wait for 5 seconds before retrying
             try:
                 response = self.airtable.update(record['id'], {field: value})
-                self.logger.info(f"Successfully updated {field} for {symbol} to {value} on retry in Airtable")
+                self.logger.info(f"Successfully {action}d {field} for {symbol} to {value} on retry in Airtable")
             except Exception as retry_e:
                 self.logger.error(f"Failed to update {field} for {symbol} to {value} on retry: {retry_e}")
         except Exception as e:
