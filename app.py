@@ -160,30 +160,10 @@ def webhook():
                     app.logger.info(f"Order for {symbol} filtered: BB is present")
                     return '', 200  # if BB is present, do not send command to PineConnector
 
-            if order_type in ['closelong', 'closeshort']:
+            if order_type == 'closelong' or order_type == 'closeshort':
                 send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
-
-                state_field = 'State Long' if order_type == 'long' else 'State Short'
-                state = record['fields'].get(state_field)
-                trend = record['fields'].get('Trend')
-                snr = record['fields'].get('SnR')
-
-                if config.FILTER_SNR and order_type == "long" and snr == "Resistance":
-                    app.logger.info(f"Order for {symbol} filtered: SnR is Resistance")
-
-                td9sell_present = record['fields'].get('TD9sell')  # get the TD9sell field for long orders
-                td9buy_present = record['fields'].get('TD9buy')  # get the TD9buy field for short orders
-
-                if config.FILTER_TD9 and order_type == "long" and td9sell_present:
-                    app.logger.info(f"Order for {symbol} filtered: TD9sell is present")
-
-                if config.FILTER_TREND and order_type == "long" and trend != "up":
-                    app.logger.info(f"Order for {symbol} filtered: Trend is not up")
-
-                if order_type == "long" and trend == "up" and not td9sell_present and snr != "Resistance":
-                    send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
-                elif order_type == "short" and trend == "down" and not td9buy_present and snr != "Support":
-                    send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
+                airtable_operations.update_airtable_field(symbol, f'State {order_type[5:].capitalize()}', 'closed')
+                airtable_operations.reset_airtable_field(symbol, f'{order_type[5:].capitalize()}#')
 
             # Add the check for Long# and Short# fields being greater than '0'
             if order_type == 'long':
