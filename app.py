@@ -11,6 +11,7 @@ handler = logging.StreamHandler()
 handler.setLevel(logging.DEBUG)
 app.logger.addHandler(handler)
 app.logger.setLevel(logging.DEBUG)
+app.logger.propagate = False
 
 class AirtableOperations:
     def __init__(self):
