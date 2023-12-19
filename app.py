@@ -148,12 +148,15 @@ def webhook():
             now = datetime.utcnow().time()
 
             # Define the start and end of the restricted period in UTC ( FILTER_TIME = True)
-            if config.FILTER_TIME:
-                start = time(21, 55)  # 9:55 PM UTC
-                end = time(23, 0)  # 11:00 PM UTC
+            start = time(21, 55)  # 9:55 PM UTC if not set in config
+            end = time(23, 0)  # 11:00 PM UTC if not set in config
+            if hasattr(config, 'FILTER_TIME_START'):
+                start = config.FILTER_TIME_START
+            if hasattr(config, 'FILTER_TIME_END'):
+                end = config.FILTER_TIME_END
 
             # Check if the current time is within the restricted period
-            if config.FILTER_TIME and start <= now <= end:
+            if start <= now <= end:
                 app.logger.info(f"Time Restriction filter applied: Current time {now} is within the restricted period from {start} to {end}.")
                 return '', 200  # If it is, do not send any commands to PineConnector
 
