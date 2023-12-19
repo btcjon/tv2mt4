@@ -90,6 +90,7 @@ def webhook():
         message_dict = {part.split('=')[0]: part.split('=')[1] for part in parts if '=' in part and len(part.split('=')) == 2}
         message_type = message_dict.get('type')
         symbol = message_dict.get('symbol')
+        entry = message_dict.get('entry', 'true').lower() == 'true'  # Default to true if not specified
         if symbol in ['NAS100', 'NAS100.PRO']:
             symbol = 'USTEC100'
 
@@ -174,6 +175,11 @@ def webhook():
                 if bb_present:
                     app.logger.info(f"BB filter applied: Order for {symbol} filtered because BB is present.")
                     return '', 200  # if BB is present, do not send command to PineConnector
+
+            # If entry is false, bypass all filters except for FILTER_TIME and BB_Filter
+            if not entry:
+                send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
+                return '', 200
 
             # Check for closelong and closeshort order types
             if order_type in ['closelong', 'closeshort']:
