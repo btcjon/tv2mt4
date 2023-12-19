@@ -1,10 +1,10 @@
-Rather than have many types of incoming messages, I will ensure incoming messages have the following syntax. This will make parsing messages more simple and flexible.
+Incoming messages will adhere to a standardized syntax for simplicity and flexibility in parsing.
 
-I will explicitly map information inside the message with '=' with each information seperated by comma.
+Message information will be key-value paired using '=' and separated by commas.
 
 Here are definitions:
 
-Common to any:
+Common to all messages:
 
     type: the type of message.  currently can only be 'update' or 'order'
         example1: type=update 
@@ -16,7 +16,7 @@ Common to any:
         example1: symbol=EURNZD
         example2: symbol=EURNZD.PRO
 
-Only found in type=update messages
+Specific to type=update messages:
 
     keyword: let's us know what needs to be updated
         example1: keyword=TD9buyOn 
@@ -31,13 +31,13 @@ Only found in type=update messages
         example2: tf=30M
         example3: tf=1D
 
-    Examples of incoming type=update messages
+    Example type=update messages:
         example1: type=update,symbol=EURNZD,keyword=up
         example2: type=update,symbol=EURNZD,keyword=up,tf=1H
         example3: type=update,symbol=USDCAD.PRO,keyword=TD9buyOn,tf=1H    
         example4: type=update,symbol=USDCAD,keyword=support
 
-    Fields in Airtable to update:
+    Airtable fields to update:
     
     Resistance (boolean)
         type=update AND any of the following:
@@ -64,7 +64,7 @@ Only found in type=update messages
         keyword=up (change Trend field to 'up')
         keyword=down (change Trend field to 'down')
 
-Only found in type=order messages
+Specific to type=order messages:
     
     order-type: defines the type of order
         example1: order-type=long
@@ -92,13 +92,13 @@ Only found in type=order messages
         example1: comment="7-0-30"
     
 
-    Examples of incoming type=order messages
+    Example type=order messages:
         example1: type=order,order-type=long,symbol=EURNZD.PRO,risk=1,comment="7-0-30",entry=true
         example2: type=order,order-type=closelong,symbol=EURNZD.PRO,comment="7-0-30"
         example3: type=order,order-type=long,symbol=EURNZD.PRO,risk=1,tp=0.08,comment="7-0-30"
         example4: type=order,order-type=long,symbol=EURNZD.PRO,risk=1,tp=0.08,sl=0.1,comment="7-0-30",entry=false
 
-Handling type=order messages:
+Handling of type=order messages:
 
 type=order messages are meant to be sent to PineConnector only if they pass the following conditions:
 
@@ -106,7 +106,7 @@ type=order messages are meant to be sent to PineConnector only if they pass the 
         - If entry=true, the order must pass all active filters as defined in the config.py settings.
         - If entry=false, the order bypasses all filters except for FILTER_TIME and BB_Filter and is sent to PineConnector immediately.
 
-Time Restriction: NONE should ever be sent to pineconnector during this time:
+Time Restriction: No orders should be sent to PineConnector during:
     # Get the current server time
     now = datetime.utcnow().time()
 
@@ -118,7 +118,7 @@ Time Restriction: NONE should ever be sent to pineconnector during this time:
     if start <= now <= end:
         return  # If it is, do not send any commands to PineConnector
 
-BB Restriction: NONE should ever be sent is 'BB' is present in 'State Long'  or 'State Short' fields
+BB Restriction: No orders should be sent if 'BB' is present in 'State Long' or 'State Short' fields.
 
     order-type=closelong = send immediately if passes Time Restriction and BB Restriction
         MUST be sent to pineconnector in following format (raw text): ID,closelong,symbol,comment
@@ -128,7 +128,7 @@ BB Restriction: NONE should ever be sent is 'BB' is present in 'State Long'  or 
         MUST be sent to pineconnector in following format (raw text): ID,closeshort,symbol,comment
         Example = 6700960415957,closeshort,EURAUD,comment="7-0-30"
 
-    order-type=long and order-type=short:
+    For order-type=long and order-type=short:
         - Orders are sent to PineConnector in the following format (raw text): ID,order-type,symbol,risk,comment (note tp and sl are optional)
         - Examples:
             - 6700960415957,long,EURAUD,risk=1,comment="7-0-30"
@@ -136,7 +136,7 @@ BB Restriction: NONE should ever be sent is 'BB' is present in 'State Long'  or 
         - The FILTER_TIME and BB_Filter checks are applied. Additional filters are applied based on the 'entry' parameter.
 
 
-Updating Airtable fields after type=order message is successfully sent:
+Post-order Airtable field updates:
 
 State Long
     1. if order-type=long was sent change field to 'open' (if it is not already)
