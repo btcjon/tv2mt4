@@ -148,15 +148,23 @@ def webhook():
             now = datetime.utcnow().time()
 
             # Define the start and end of the restricted period in UTC ( FILTER_TIME = True)
-            start = time(21, 55)  # 9:55 PM UTC
-            end = time(23, 0)  # 11:00 PM UTC
+            if config.FILTER_TIME:
+                start = time(21, 55)  # 9:55 PM UTC
+                end = time(23, 0)  # 11:00 PM UTC
 
             # Check if the current time is within the restricted period
-            if start <= now <= end:
+            if config.FILTER_TIME and start <= now <= end:
                 app.logger.info(f"Time Restriction filter applied: Current time {now} is within the restricted period from {start} to {end}.")
                 return '', 200  # If it is, do not send any commands to PineConnector
 
             #We need to check config if BB_Filter is set to True
+            if config.BB_Filter:
+                record = airtable_operations.get_matching_record(symbol)
+                if record:
+                    bb_present = record['fields'].get('BB')  # get the BB field
+                    if bb_present:
+                        app.logger.info(f"BB filter applied: Order for {symbol} filtered because BB is present.")
+                        return '', 200  # if BB is present, do not send command to PineConnector
             record = airtable_operations.get_matching_record(symbol)
             if record:
                 bb_present = record['fields'].get('BB')  # get the BB field
@@ -167,19 +175,9 @@ def webhook():
             # Check for closelong and closeshort order types
             if order_type in ['closelong', 'closeshort']:
                 # Check for Time Restriction and BB Restriction
-                if start <= now <= end:
-                    app.logger.info(f"Order for {symbol} filtered: Time Restriction")
-                else:
-                    record = airtable_operations.get_matching_record(symbol)
-                    if record:
-                        state_field = f'State {order_type[5:].capitalize()}'
-                        bb_present = record['fields'].get('BB', False)
-                        if bb_present:
-                            app.logger.info(f"Order for {symbol} filtered: BB is present in {state_field}")
-                        else:
-                            send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
-                            airtable_operations.update_airtable_field(symbol, state_field, 'closed')
-                            airtable_operations.reset_airtable_field(symbol, f'{order_type[5:].capitalize()}#')
+                send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
+                airtable_operations.update_airtable_field(symbol, f'State {order_type[5:].capitalize()}', 'closed')
+                airtable_operations.reset_airtable_field(symbol, f'{order_type[5:].capitalize()}#')
 
             # Add the check for Long# and Short# fields being greater than '0'
             if order_type == 'long':
