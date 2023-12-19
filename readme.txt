@@ -99,6 +99,12 @@ Handling type=order messages:
 
 type=order messages are meant to be sent to pineconnector ONLY if they pass the following conditions:
 
+    entry: defines if the order should bypass certain filters
+        example1: entry=true
+        example2: entry=false
+        If entry=true, then it needs to follow the FILTER_SNR, FILTER_TD9, FILTER_TREND, FILTER_TIME, BB_Filter, etc according to the config.py
+        If entry=false then ignore all filters except for FILTER_TIME and BB_Filter and send to pineconnector
+
 Time Restriction: NONE should ever be sent to pineconnector during this time:
     # Get the current server time
     now = datetime.utcnow().time()
