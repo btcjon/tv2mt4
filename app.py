@@ -147,7 +147,7 @@ def webhook():
             # Get the current server time
             now = datetime.utcnow().time()
 
-            # Define the start and end of the restricted period in UTC
+            # Define the start and end of the restricted period in UTC ( FILTER_TIME = True)
             start = time(21, 55)  # 9:55 PM UTC
             end = time(23, 0)  # 11:00 PM UTC
 
@@ -156,6 +156,7 @@ def webhook():
                 app.logger.info(f"Time Restriction filter applied: Current time {now} is within the restricted period from {start} to {end}.")
                 return '', 200  # If it is, do not send any commands to PineConnector
 
+            #We need to check config if BB_Filter is set to True
             record = airtable_operations.get_matching_record(symbol)
             if record:
                 bb_present = record['fields'].get('BB')  # get the BB field
