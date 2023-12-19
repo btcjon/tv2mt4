@@ -84,26 +84,28 @@ Only found in type=order messages
     tp: defines take profit
         example1: tp=0.08
         example2: tp=0.1
+    
+    entry: defines if it is an entry order or not
+        example1: entry=true
+        example2: entry=false
 
     comment: defines the order comment
         example1: comment="7-0-30"
     
 
     Examples of incoming type=order messages
-        example1: type=order,order-type=long,symbol=EURNZD.PRO,risk=1,comment="7-0-30"
+        example1: type=order,order-type=long,symbol=EURNZD.PRO,risk=1,comment="7-0-30",entry=true
         example2: type=order,order-type=closelong,symbol=EURNZD.PRO,comment="7-0-30"
         example3: type=order,order-type=long,symbol=EURNZD.PRO,risk=1,tp=0.08,comment="7-0-30"
-        example4: type=order,order-type=long,symbol=EURNZD.PRO,risk=1,tp=0.08,sl=0.1,comment="7-0-30"
+        example4: type=order,order-type=long,symbol=EURNZD.PRO,risk=1,tp=0.08,sl=0.1,comment="7-0-30",entry=false
 
 Handling type=order messages:
 
 type=order messages are meant to be sent to pineconnector ONLY if they pass the following conditions:
 
-    entry: defines if the order should bypass certain filters
-        example1: entry=true
-        example2: entry=false
-        If entry=true, then it needs to follow the FILTER_SNR, FILTER_TD9, FILTER_TREND, FILTER_TIME, BB_Filter, etc according to the config.py
-        If entry=false then ignore all filters except for FILTER_TIME and BB_Filter and send to pineconnector
+    entry: indicates whether the order should bypass certain filters
+        - If entry=true, the order must pass all active filters as defined in the config.py settings.
+        - If entry=false, the order bypasses all filters except for FILTER_TIME and BB_Filter and is sent to PineConnector immediately.
 
 Time Restriction: NONE should ever be sent to pineconnector during this time:
     # Get the current server time
@@ -162,16 +164,4 @@ Short#
     2. if order-type=closeshort was sent, change number to '0'
 
 
-** New Revision
-I want to add a conditon where we can get message that contains entry=true or entry=false and if entry=true.
-
-    If entry=true, then the order must pass all active filters as defined in the config.py settings.
-
-    If entry=false, then the order bypasses all filters except for FILTER_TIME and BB_Filter and is sent to PineConnector immediately.
-
-    Example of new message that contains the new 'entry' message
-        example1: type=order,order-type=long,symbol=EURNZD.PRO,risk=1,comment="7-0-30",entry=true
-        example2: type=order,order-type=long,symbol=EURNZD.PRO,risk=1,comment="7-0-30",entry=false
-        example3: type=order,order-type=short,symbol=EURNZD.PRO,risk=1,comment="7-0-30",entry=true
-        example4: type=order,order-type=long,symbol=EURNZD.PRO,risk=1,tp=0.08,comment="7-0-30",entry=false
 
