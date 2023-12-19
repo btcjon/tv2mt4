@@ -1,5 +1,4 @@
-Rather than have many types of incoming messages, I will ensure incoming messages have the following syntax.
-This will make parsing messages more simple and flexible.
+Rather than have many types of incoming messages, I will ensure incoming messages have the following syntax. This will make parsing messages more simple and flexible.
 
 I will explicitly map information inside the message with '=' with each information seperated by comma.
 
@@ -135,15 +134,6 @@ BB Restriction: NONE should ever be sent is 'BB' is present in 'State Long'  or 
             - 6700960415957,long,EURAUD,risk=1,comment="7-0-30"
             - 6700960415957,short,EURAUD,risk=1,tp=0.07,sl=0.1,comment="7-0-30"
         - The FILTER_TIME and BB_Filter checks are applied. Additional filters are applied based on the 'entry' parameter.
-    
-    order-type=short: sending rules below...
-        1. IF Short# field is greater than '0' send immediately, otherwise respect the following filters,
-        2. Trend = down
-        3. Support = false
-        4. TD9buy = false
-            MUST be sent to pineconnector in following format (raw text): ID,short,symbol,risk,comment (note tp and sl are optional)
-            Example = 6700960415957,short,EURAUD,risk=1,comment="7-0-30" (note tp and sl are optional)
-            Example = 6700960415957,short,EURAUD,risk=1,tp=0.07,sl=0.1,comment="7-0-30"
 
 
 Updating Airtable fields after type=order message is successfully sent:
