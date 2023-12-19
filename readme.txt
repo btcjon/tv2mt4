@@ -150,3 +150,25 @@ Long#
 Short#
     1. if order-type=short was sent, increment the number by '1'
     2. if order-type=closeshort was sent, change number to '0'
+    BB (boolean)
+        type=update AND any of the following:
+        keyword=BB (true)
+        keyword=BBOFF (false)
+
+    Handling of the USTEC100 symbol:
+        - If the symbol is 'NAS100' or 'NAS100.PRO', it is replaced with 'USTEC100' before processing.
+
+    Retry Logic for Airtable Updates:
+        - In case of a connection error when updating Airtable fields, the system will wait for 5 seconds and retry the update.
+
+    Time Restriction Configuration:
+        - The start and end times for the restricted period can be overridden by `FILTER_TIME_START` and `FILTER_TIME_END` in `config.py`.
+
+    BB Filter Configuration:
+        - The presence of 'BB' in Airtable fields can be used as a filter based on the `BB_Filter` setting in `config.py`.
+
+    Incrementing and Resetting Long# and Short#:
+        - After sending an order of type 'long', the 'Long#' field is incremented by 1.
+        - After sending an order of type 'closelong', the 'Long#' field is reset to 0.
+        - After sending an order of type 'short', the 'Short#' field is incremented by 1.
+        - After sending an order of type 'closeshort', the 'Short#' field is reset to 0.
