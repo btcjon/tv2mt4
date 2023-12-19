@@ -165,9 +165,9 @@ Short#
 ** New Revision
 I want to add a conditon where we can get message that contains entry=true or entry=false and if entry=true.
 
-    If entry=true, then it needs to follow the FILTER_SNR, FILTER_TD9, FILTER_TREND, FILTER_TIME, BB_Filter, etc according to the config.py
+    If entry=true, then it needs to follow the FILTER_SNR, FILTER_TD9, FILTER_TREND, FILTER_TIME, BB_Filter, etc according to the config.py settings.
 
-    If entry=false then ignore all filters except for FILTER_TIME and BB_Filter and send to pineconnector
+    If entry=false then ignore all filters except for FILTER_TIME and BB_Filter and send the order to PineConnector immediately.
 
     Example of new message that contains the new 'entry' message
         example1: type=order,order-type=long,symbol=EURNZD.PRO,risk=1,comment="7-0-30",entry=true
