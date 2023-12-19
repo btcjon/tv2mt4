@@ -101,7 +101,7 @@ Only found in type=order messages
 
 Handling type=order messages:
 
-type=order messages are meant to be sent to pineconnector ONLY if they pass the following conditions:
+type=order messages are meant to be sent to PineConnector only if they pass the following conditions:
 
     entry: indicates whether the order should bypass certain filters
         - If entry=true, the order must pass all active filters as defined in the config.py settings.
@@ -129,14 +129,12 @@ BB Restriction: NONE should ever be sent is 'BB' is present in 'State Long'  or 
         MUST be sent to pineconnector in following format (raw text): ID,closeshort,symbol,comment
         Example = 6700960415957,closeshort,EURAUD,comment="7-0-30"
 
-    order-type=long: sending rules below...
-        1. IF Long# field is greater than '0' send immediately, otherwise respect the following filters,
-        2. Trend = up
-        3. Resistance = false
-        4. TD9sell = false
-            MUST be sent to pineconnector in following format (raw text): ID,long,symbol,risk,comment (note tp and sl are optional)
-            Example = 6700960415957,long,EURAUD,risk=1,comment="7-0-30" (note tp and sl are optional)
-            Example = 6700960415957,long,EURAUD,risk=1,tp=0.07,sl=0.1,comment="7-0-30"
+    order-type=long and order-type=short:
+        - Orders are sent to PineConnector in the following format (raw text): ID,order-type,symbol,risk,comment (note tp and sl are optional)
+        - Examples:
+            - 6700960415957,long,EURAUD,risk=1,comment="7-0-30"
+            - 6700960415957,short,EURAUD,risk=1,tp=0.07,sl=0.1,comment="7-0-30"
+        - The FILTER_TIME and BB_Filter checks are applied. Additional filters are applied based on the 'entry' parameter.
     
     order-type=short: sending rules below...
         1. IF Short# field is greater than '0' send immediately, otherwise respect the following filters,
@@ -162,6 +160,3 @@ Long#
 Short#
     1. if order-type=short was sent, increment the number by '1'
     2. if order-type=closeshort was sent, change number to '0'
-
-
-
