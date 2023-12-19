@@ -72,19 +72,19 @@ Specific to type=order messages:
         example3: order-type=closelong
         example4: order-type=closeshort
 
-    risk: defines the risk in an order
+    risk: defines the risk in an order (required for order-type=long and order-type=short)
         example1: risk=1
         example2: risk=0.3
     
-    sl: defines stop loss
+    sl: defines stop loss (optional and only applies to order-type=long and order-type=short)
         example1: sl=0.1
         example2: sl=0.05
     
-    tp: defines take profit
+    tp: defines take profit (optional and only applies to order-type=long and order-type=short)
         example1: tp=0.08
         example2: tp=0.1
     
-    entry: defines if it is an entry order or not
+    entry: defines if it is an entry order or not (entry orders follow stricter filtering than entry=false)
         example1: entry=true
         example2: entry=false
 
