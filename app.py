@@ -256,7 +256,7 @@ def send_pineconnector_command(order_type, symbol, risk, tp, sl, comment):
         # Ensure the comment is included with only a single set of quotes
         pineconnector_command += f',comment={comment}'
     response = requests.post(config.PINECONNECTOR_WEBHOOK_URL, data=pineconnector_command)
-    app.logger.debug(f"PineConnector response: {response.text}")
+    app.logger.debug(f"PineConnector response: {response.status_code} {response.reason} - {response.text}")
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=True)
