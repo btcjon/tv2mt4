@@ -29,22 +29,21 @@ class AirtableOperations:
         try:
             record = self.get_matching_record(symbol)
             action = 'update' if value not in [False, None] else 'clear'
-            self.logger.debug(f"Attempting to {action} {field} for {symbol} to {value}")
             if record:
                 self.airtable.update(record['id'], {field: value})
-                self.logger.info(f"Successfully {action}d {field} for {symbol} to {value} in Airtable")
+                self.logger.info(f"{field} for {symbol} {action}d to {value}")
             else:
-                self.logger.warning(f"No matching record found for symbol: {symbol}")
+                self.logger.error(f"Record not found for {symbol}")
         except requests.exceptions.ConnectionError as e:
-            self.logger.error(f"Connection error when updating {field} for {symbol} to {value}: {e}, retrying...")
+            self.logger.error(f"Connection error on {action} {field} for {symbol}: {e}, retrying...")
             time.sleep(5)  # Wait for 5 seconds before retrying
             try:
                 response = self.airtable.update(record['id'], {field: value})
-                self.logger.info(f"Successfully {action}d {field} for {symbol} to {value} on retry in Airtable")
+                self.logger.info(f"{field} for {symbol} {action}d to {value} on retry")
             except Exception as retry_e:
-                self.logger.error(f"Failed to update {field} for {symbol} to {value} on retry: {retry_e}")
+                self.logger.error(f"Retry failed for {action} {field} for {symbol}: {retry_e}")
         except Exception as e:
-            self.logger.error(f"Failed to update {field} for {symbol} to {value}: {e}")
+            self.logger.error(f"{action.capitalize()} {field} for {symbol} failed: {e}")
 
     def increment_airtable_field(self, symbol, field):
         try:
@@ -54,30 +53,30 @@ class AirtableOperations:
                 count = int(count) + 1
                 try:
                     self.airtable.update(record['id'], {field: count})  # Send an integer value
-                    self.logger.info(f"Successfully incremented {field} for {symbol} by 1 in Airtable")
+                    self.logger.info(f"Incremented {field} for {symbol} by 1")
                 except requests.exceptions.HTTPError as http_err:
-                    self.logger.error(f"HTTP error occurred when incrementing {field} for {symbol}: {http_err.response.text}")
+                    self.logger.error(f"HTTP error on increment {field} for {symbol}: {http_err.response.text}")
                 except Exception as e:
-                    self.logger.error(f"Failed to increment {field} for {symbol}: {e}")
+                    self.logger.error(f"Increment {field} for {symbol} failed: {e}")
             else:
-                self.logger.warning(f"No matching record found for symbol: {symbol}")
+                self.logger.error(f"Record not found for {symbol}")
         except requests.exceptions.HTTPError as http_err:
-            self.logger.error(f"HTTP error occurred when incrementing {field} for {symbol}: {http_err}")
+            self.logger.error(f"HTTP error on increment {field} for {symbol}: {http_err}")
         except Exception as e:
-            self.logger.error(f"Failed to increment {field} for {symbol}: {e}")
+            self.logger.error(f"Increment {field} for {symbol} failed: {e}")
 
     def reset_airtable_field(self, symbol, field):
         try:
             record = self.get_matching_record(symbol)
             if record:
                 self.airtable.update(record['id'], {field: 0})  # Send an integer value for the reset
-                self.logger.info(f"Successfully reset {field} for {symbol} in Airtable")
+                self.logger.info(f"Reset {field} for {symbol} to 0")
             else:
-                self.logger.warning(f"No matching record found for symbol: {symbol}")
+                self.logger.error(f"Record not found for {symbol}")
         except requests.exceptions.HTTPError as http_err:
-            self.logger.error(f"HTTP error occurred when resetting {field} for {symbol}: {http_err}")
+            self.logger.error(f"HTTP error on reset {field} for {symbol}: {http_err}")
         except Exception as e:
-            self.logger.error(f"Failed to reset {field} for {symbol}: {e}")
+            self.logger.error(f"Reset {field} for {symbol} failed: {e}")
 
 airtable_operations = AirtableOperations()
 
