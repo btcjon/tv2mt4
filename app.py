@@ -130,16 +130,16 @@ def webhook():
             elif keyword == 'down':
                 field_name = 'Trend'
                 update_value = 'down'
-            app.logger.info(f"Processed update message for symbol: {symbol}, setting {field_name} to {update_value}")
+            app.logger.info(f"Update: {symbol} - {keyword} received")
             try:
                 if field_name is not None and update_value is not None:
                     airtable_operations.update_airtable_field(symbol, field_name, update_value)
-                    app.logger.info(f"Processed update message for symbol: {symbol}")
+                    app.logger.info(f"Airtable Update: {symbol} - {field_name} set to {update_value}")
                 else:
-                    app.logger.error(f"Unrecognized keyword in update message for symbol: {symbol}: {keyword}")
+                    app.logger.warning(f"Update Error: {symbol} - Unrecognized keyword '{keyword}'")
                 return '', 200
             except Exception as e:
-                app.logger.exception(f"An exception occurred while processing the update message for symbol: {symbol}: {e}")
+                app.logger.error(f"Update Exception: {symbol} - {e}")
                 return 'Error', 500
         elif message_type == 'order':
             # ... rest of the webhook function ...
@@ -163,7 +163,7 @@ def webhook():
 
             # Check if the current time is within the restricted period
             if start <= now <= end:
-                app.logger.info(f"Order not sent due to time restriction for symbol: {symbol}")
+                app.logger.info(f"Order Skipped: {symbol} - Time restriction ({start} - {end})")
                 app.logger.info(f"Time Restriction filter applied: Current time {now} is within the restricted period from {start} to {end}.")
                 return '', 200  # If it is, do not send any commands to PineConnector
 
@@ -185,7 +185,7 @@ def webhook():
 
             # If entry is false, bypass all filters except for FILTER_TIME and BB_Filter
             if not entry:
-                app.logger.info(f"Sending order to PineConnector with bypassed filters for symbol: {symbol}")
+                app.logger.info(f"Order Sent: {symbol} - Filters bypassed (entry=false)")
                 send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
                 return '', 200
 
