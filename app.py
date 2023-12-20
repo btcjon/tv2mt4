@@ -146,7 +146,7 @@ def webhook():
             tp = message_dict.get('tp')
             sl = message_dict.get('sl')
             comment = message_dict.get('comment')
-            app.logger.info(f"Processing order message for symbol: {symbol}")
+            # Removed redundant log for processing order message
 
             # Get the current server time
             now = datetime.utcnow().time()
@@ -161,8 +161,7 @@ def webhook():
 
             # Check if the current time is within the restricted period
             if start <= now <= end:
-                app.logger.info(f"Order Skipped: {symbol} - Time restriction ({start} - {end})")
-                # Combined the two log messages into one
+                app.logger.info(f"Order for {symbol} skipped due to time restriction ({start.strftime('%H:%M')} - {end.strftime('%H:%M')})")
                 return '', 200  # If it is, do not send any commands to PineConnector
 
             #We need to check config if BB_Filter is set to True
@@ -171,8 +170,7 @@ def webhook():
                 if record:
                     bb_present = record['fields'].get('BB')  # get the BB field
                     if bb_present:
-                        app.logger.info(f"Order not sent due to BB filter for symbol: {symbol}")
-                        app.logger.info(f"BB filter applied: Order for {symbol} filtered because BB is present.")
+                        app.logger.info(f"Order for {symbol} not sent due to BB filter.")
                         return '', 200  # if BB is present, do not send command to PineConnector
             record = airtable_operations.get_matching_record(symbol)
             if record:
@@ -181,20 +179,32 @@ def webhook():
                     # Combined the two log messages into one
                     return '', 200  # if BB is present, do not send command to PineConnector
 
+            # ... rest of the order handling logic ...
+
             # If entry is false, bypass all filters except for FILTER_TIME and BB_Filter
             if not entry:
-                app.logger.info(f"Order Sent: {symbol} - Filters bypassed (entry=false)")
+                app.logger.info(f"Order for {symbol} sent with filters bypassed (entry=false)")
                 send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
                 return '', 200
 
             # Check for closelong and closeshort order types
             if order_type in ['closelong', 'closeshort']:
                 # Check for Time Restriction and BB Restriction
-                app.logger.info(f"Sending close order to PineConnector for symbol: {symbol}")
+                app.logger.info(f"Close order for {symbol} sent to PineConnector.")
                 send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
                 airtable_operations.update_airtable_field(symbol, f'State {order_type[5:].capitalize()}', 'closed')
                 airtable_operations.reset_airtable_field(symbol, f'{order_type[5:].capitalize()}#')
 
+            # ... rest of the long and short order handling logic ...
+
+            return '', 200
+
+        # Add a default return at the end of the function
+        return '', 200
+    except Exception as e:
+        app.logger.exception(f"An unhandled exception occurred in the webhook function: {e}")
+        # Removed duplicate exception log
+        return 'Error', 500
             # Add the check for Long# and Short# fields being greater than '0'
             if order_type == 'long':
                 long_count = int(record['fields'].get('Long#', 0))
@@ -244,6 +254,16 @@ def webhook():
                 airtable_operations.update_airtable_field(symbol, f'State {order_type[5:].capitalize()}', 'closed')
                 airtable_operations.reset_airtable_field(symbol, f'{order_type[5:].capitalize()}#')
 
+            # ... rest of the long and short order handling logic ...
+
+            return '', 200
+
+        # Add a default return at the end of the function
+        return '', 200
+    except Exception as e:
+        app.logger.exception(f"An unhandled exception occurred in the webhook function: {e}")
+        # Removed duplicate exception log
+        return 'Error', 500
             return '', 200
 
         # Add a default return at the end of the function
