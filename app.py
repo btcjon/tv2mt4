@@ -162,7 +162,7 @@ def webhook():
                 return '', 200  # If it is, do not send any commands to PineConnector
 
             #We need to check config if BB_Filter is set to True
-            if config.BB_Filter:
+            if getattr(config, 'BB_Filter', False):
                 record = airtable_operations.get_matching_record(symbol)
                 if record:
                     bb_present = record['fields'].get('BB')  # get the BB field
