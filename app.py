@@ -134,12 +134,12 @@ def webhook():
             try:
                 if field_name is not None and update_value is not None:
                     airtable_operations.update_airtable_field(symbol, field_name, update_value)
-                    app.logger.info(f"Airtable Update: {symbol} - {field_name} set to {update_value}")
+                    app.logger.info(f"Updated Airtable: {symbol} - {field_name} = {update_value}")
                 else:
-                    app.logger.warning(f"Update Error: {symbol} - Unrecognized keyword '{keyword}'")
+                    app.logger.warning(f"Unrecognized keyword: {symbol} - '{keyword}'")
                 return '', 200
             except Exception as e:
-                app.logger.error(f"Update Exception: {symbol} - {e}")
+                app.logger.error(f"Update Failed: {symbol} - {e}")
                 return 'Error', 500
         elif message_type == 'order':
             # ... rest of the webhook function ...
