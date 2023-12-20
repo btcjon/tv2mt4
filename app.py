@@ -84,7 +84,7 @@ airtable_operations = AirtableOperations()
 def webhook():
     try:
         data = request.data.decode('utf-8')
-        app.logger.debug(f"Received webhook data: {data}")
+        # Removed redundant debug log for received data
         parts = data.split(',')
 
         # Only include parts that can be split into exactly two items with '='
@@ -132,13 +132,12 @@ def webhook():
             app.logger.info(f"Update: {symbol} - {keyword} received")
             try:
                 if field_name is not None and update_value is not None:
-                    airtable_operations.update_airtable_field(symbol, field_name, update_value)
-                    app.logger.info(f"Airtable Updated: {symbol} - {field_name} set to {update_value}")
+                    airtable_operations.update_airtable_field(symbol, field_name, update_value)  # Log inside method
                 else:
-                    app.logger.warning(f"Update Skipped: {symbol} - Unrecognized keyword '{keyword}'")
+                    app.logger.error(f"Unrecognized keyword '{keyword}' for {symbol}")
                 return '', 200
             except Exception as e:
-                app.logger.error(f"Airtable Update Error: {symbol} - {e}")
+                app.logger.exception(f"Airtable update error for {symbol}", exc_info=e)
                 return 'Error', 500
         elif message_type == 'order':
             # ... rest of the webhook function ...
@@ -163,7 +162,7 @@ def webhook():
             # Check if the current time is within the restricted period
             if start <= now <= end:
                 app.logger.info(f"Order Skipped: {symbol} - Time restriction ({start} - {end})")
-                app.logger.info(f"Time Restriction filter applied: Current time {now} is within the restricted period from {start} to {end}.")
+                # Combined the two log messages into one
                 return '', 200  # If it is, do not send any commands to PineConnector
 
             #We need to check config if BB_Filter is set to True
@@ -179,7 +178,7 @@ def webhook():
             if record:
                 bb_present = record['fields'].get('BB')  # get the BB field
                 if bb_present:
-                    app.logger.info(f"BB filter applied: Order for {symbol} filtered because BB is present.")
+                    # Combined the two log messages into one
                     return '', 200  # if BB is present, do not send command to PineConnector
 
             # If entry is false, bypass all filters except for FILTER_TIME and BB_Filter
@@ -251,7 +250,7 @@ def webhook():
         return '', 200
     except Exception as e:
         app.logger.exception(f"An unhandled exception occurred in the webhook function: {e}")
-        app.logger.exception(f"An unhandled exception occurred in the webhook function: {e}")
+        # Removed duplicate exception log
         return 'Error', 500
 
 def send_pineconnector_command(order_type, symbol, risk, tp, sl, comment):
