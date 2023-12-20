@@ -194,6 +194,46 @@ def webhook():
                 send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
                 airtable_operations.update_airtable_field(symbol, f'State {order_type[5:].capitalize()}', 'closed')
                 airtable_operations.reset_airtable_field(symbol, f'{order_type[5:].capitalize()}#')
+            # ... rest of the long and short order handling logic ...
+            else:
+                # Initialize a list to keep track of which filters passed or failed
+                filters_passed = []
+                filters_failed = []
+
+                # Check each filter and append the result to the corresponding list
+                if long_count > 0 or (trend == 'up' and not resistance and not td9sell):
+                    filters_passed.append('Long# > 0' if long_count > 0 else 'Trend is up and no resistance or TD9sell')
+                else:
+                    filters_failed.append('Long# <= 0' if long_count <= 0 else 'Trend is not up or resistance or TD9sell present')
+
+                if short_count > 0 or (trend == 'down' and not support and not td9buy):
+                    filters_passed.append('Short# > 0' if short_count > 0 else 'Trend is down and no support or TD9buy')
+                else:
+                    filters_failed.append('Short# <= 0' if short_count <= 0 else 'Trend is not down or support or TD9buy present')
+
+                # Log the results of the filter checks
+                if filters_passed:
+                    app.logger.info(f"Order for {symbol} passed filters: {', '.join(filters_passed)}")
+                if filters_failed:
+                    app.logger.info(f"Order for {symbol} did not pass filters: {', '.join(filters_failed)}")
+
+                # If any filters failed, do not send the order to PineConnector
+                if filters_failed:
+                    return '', 200
+
+                # If all filters passed, send the order to PineConnector
+                app.logger.info(f"Sending order to PineConnector for symbol: {symbol}")
+                send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
+
+                # Update Airtable fields if necessary
+                if order_type == 'long' and long_count == 0:
+                    airtable_operations.update_airtable_field(symbol, 'State Long', 'open')
+                    airtable_operations.increment_airtable_field(symbol, 'Long#')
+                elif order_type == 'short' and short_count == 0:
+                    airtable_operations.update_airtable_field(symbol, 'State Short', 'open')
+                    airtable_operations.increment_airtable_field(symbol, 'Short#')
+
+            return '', 200
 
             # ... rest of the long and short order handling logic ...
 
