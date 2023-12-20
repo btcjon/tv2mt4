@@ -146,6 +146,7 @@ def webhook():
             tp = message_dict.get('tp')
             sl = message_dict.get('sl')
             comment = message_dict.get('comment')
+            app.logger.info(f"Processing order message for symbol: {symbol}")
 
             # Get the current server time
             now = datetime.utcnow().time()
@@ -160,6 +161,7 @@ def webhook():
 
             # Check if the current time is within the restricted period
             if start <= now <= end:
+                app.logger.info(f"Order not sent due to time restriction for symbol: {symbol}")
                 app.logger.info(f"Time Restriction filter applied: Current time {now} is within the restricted period from {start} to {end}.")
                 return '', 200  # If it is, do not send any commands to PineConnector
 
@@ -169,6 +171,7 @@ def webhook():
                 if record:
                     bb_present = record['fields'].get('BB')  # get the BB field
                     if bb_present:
+                        app.logger.info(f"Order not sent due to BB filter for symbol: {symbol}")
                         app.logger.info(f"BB filter applied: Order for {symbol} filtered because BB is present.")
                         return '', 200  # if BB is present, do not send command to PineConnector
             record = airtable_operations.get_matching_record(symbol)
@@ -180,12 +183,14 @@ def webhook():
 
             # If entry is false, bypass all filters except for FILTER_TIME and BB_Filter
             if not entry:
+                app.logger.info(f"Sending order to PineConnector with bypassed filters for symbol: {symbol}")
                 send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
                 return '', 200
 
             # Check for closelong and closeshort order types
             if order_type in ['closelong', 'closeshort']:
                 # Check for Time Restriction and BB Restriction
+                app.logger.info(f"Sending close order to PineConnector for symbol: {symbol}")
                 send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
                 airtable_operations.update_airtable_field(symbol, f'State {order_type[5:].capitalize()}', 'closed')
                 airtable_operations.reset_airtable_field(symbol, f'{order_type[5:].capitalize()}#')
@@ -207,6 +212,7 @@ def webhook():
                     app.logger.info(f"TD9sell filter failed: TD9sell for {symbol} is present.")
                 if long_count > 0 or (trend == 'up' and not resistance and not td9sell):
                     app.logger.info(f"Sending PineConnector command for {symbol} as all filters passed or Long# is greater than 0.")
+                    app.logger.info(f"Sending long order to PineConnector for symbol: {symbol}")
                     send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
                     if long_count == 0:  # Only update if Long# was 0
                         airtable_operations.update_airtable_field(symbol, 'State Long', 'open')
@@ -227,11 +233,13 @@ def webhook():
                     app.logger.info(f"TD9buy filter failed: TD9buy for {symbol} is present.")
                 if short_count > 0 or (trend == 'down' and not support and not td9buy):
                     app.logger.info(f"Sending PineConnector command for {symbol} as all filters passed or Short# is greater than 0.")
+                    app.logger.info(f"Sending short order to PineConnector for symbol: {symbol}")
                     send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
                     if short_count == 0:  # Only update if Short# was 0
                         airtable_operations.update_airtable_field(symbol, 'State Short', 'open')
                         airtable_operations.increment_airtable_field(symbol, 'Short#')
             elif order_type in ['closelong', 'closeshort']:
+                app.logger.info(f"Sending close order to PineConnector for symbol: {symbol}")
                 send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
                 airtable_operations.update_airtable_field(symbol, f'State {order_type[5:].capitalize()}', 'closed')
                 airtable_operations.reset_airtable_field(symbol, f'{order_type[5:].capitalize()}#')
@@ -241,6 +249,7 @@ def webhook():
         # Add a default return at the end of the function
         return '', 200
     except Exception as e:
+        app.logger.exception(f"An unhandled exception occurred in the webhook function: {e}")
         app.logger.exception(f"An unhandled exception occurred in the webhook function: {e}")
         return 'Error', 500
 
