@@ -9,11 +9,11 @@ from airtable import Airtable
 app = Flask(__name__)
 handler = logging.StreamHandler()
 handler.setLevel(logging.INFO)  # Set to INFO to reduce the verbosity of the logs
-formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+formatter = logging.Formatter('%(asctime)s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 handler.setFormatter(formatter)
 app.logger.addHandler(handler)
 app.logger.setLevel(logging.INFO)  # Set to INFO to reduce the verbosity of the logs
-app.logger.propagate = False
+app.logger.propagate = True
 
 class AirtableOperations:
     def __init__(self):
