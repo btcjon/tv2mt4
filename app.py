@@ -122,6 +122,7 @@ def webhook():
                 field_name = 'TD9sell'
                 update_value = True
             elif keyword == 'TD9sellOFF':  # Corrected keyword
+            elif keyword == 'TD9sellOFF':
                 field_name = 'TD9sell'
                 update_value = False
             elif keyword == 'up':
@@ -130,6 +131,7 @@ def webhook():
             elif keyword == 'down':
                 field_name = 'Trend'
                 update_value = 'down'
+            app.logger.info(f"Processed update message for symbol: {symbol}, setting {field_name} to {update_value}")
             try:
                 if field_name is not None and update_value is not None:
                     airtable_operations.update_airtable_field(symbol, field_name, update_value)
@@ -141,6 +143,7 @@ def webhook():
                 app.logger.exception(f"An exception occurred while processing the update message for symbol: {symbol}: {e}")
                 return 'Error', 500
         elif message_type == 'order':
+            # ... rest of the webhook function ...
             order_type = message_dict.get('order-type')
             risk = message_dict.get('risk')
             tp = message_dict.get('tp')
