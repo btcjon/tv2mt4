@@ -1,13 +1,14 @@
 
 from flask import Flask
 from logger import setup_logger
+from logger import setup_logger
 from webhook_handlers import webhook
 
 app = Flask(__name__)
 app.logger = setup_logger()
 
 @app.route('/webhook', methods=['POST'])
-def webhook_route():
+def webhook():
     return webhook()
 
 if __name__ == "__main__":
