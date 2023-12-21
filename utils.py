@@ -1,9 +1,10 @@
 
 import requests
 import config
-import logging
+from flask import current_app as app
 
 def send_pineconnector_command(order_type, symbol, risk, tp, sl, comment):
+    # ... existing code ...
     if not symbol.endswith('.PRO') and symbol != 'USTEC100':
         symbol += '.PRO'  # append '.PRO' to the symbol only if it's not already there
     pineconnector_command = f"{config.PINECONNECTOR_LICENSE_ID},{order_type},{symbol}"

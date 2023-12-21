@@ -1,9 +1,8 @@
-from flask import request
+from flask import request, current_app as app
 import logging
 import config
 from airtable_operations import AirtableOperations
-from utils import send_pineconnector_command, parse_webhook_data, handle_update_message, handle_order_message
-from utils import send_pineconnector_command
+from utils import parse_webhook_data, handle_update_message, handle_order_message
 
 def webhook():
     try:
