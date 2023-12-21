@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, request
 from logger import setup_logger
 from webhook_handlers import handle_webhook
 from flask import request
@@ -16,13 +16,7 @@ if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=True)
 
 app = Flask(__name__)
-handler = logging.StreamHandler()
-handler.setLevel(logging.INFO)  # Set to INFO to reduce the verbosity of the logs
-formatter = logging.Formatter('%(asctime)s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
-handler.setFormatter(formatter)
-app.logger.addHandler(handler)
-app.logger.setLevel(logging.INFO)  # Set to INFO to reduce the verbosity of the logs
-app.logger.propagate = False
+logger = setup_logger()
 
 class AirtableOperations:
     def __init__(self):
