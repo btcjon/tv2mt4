@@ -32,7 +32,7 @@ Each task is prepended with its current status. There are only 3 statuses allowe
 
 5. **Utility Functions** (File: `utils.py`)
     - Done: Create a file named `utils.py`.
-    - Incomplete: Move utility functions like `send_pineconnector_command` to this file. Ensure all dependencies and imports are included. Import these utilities where needed (e.g., `app.py`, `webhook_handlers.py`).
+    - Done: Move utility functions like `send_pineconnector_command` to this file. Ensure all dependencies and imports are included. Import these utilities where needed (e.g., `app.py`, `webhook_handlers.py`).
 
 ## Additional Notes
 - Test each component post-restructuring to ensure functionality is intact.
