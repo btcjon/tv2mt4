@@ -271,25 +271,6 @@ def webhook():
             except Exception as e:
                 app.logger.exception(f"An unhandled exception occurred in the webhook function: {e}")
                 return 'Error', 500
-            # Add the check for Long# and Short# fields being greater than '0'
-            if order_type == 'long':
-                # ... existing code for handling 'long' order type ...
-            elif order_type == 'short':
-                # ... existing code for handling 'short' order type ...
-            elif order_type in ['closelong', 'closeshort']:
-                # ... existing code for handling 'closelong' and 'closeshort' order types ...
-
-            # ... rest of the long and short order handling logic ...
-
-            # Add a default return at the end of the function
-            return '', 200
-
-                # Add a default return at the end of the function
-                return '', 200
-            except Exception as e:
-                app.logger.exception(f"An unhandled exception occurred in the webhook function: {e}")
-                # Removed duplicate exception log
-                return 'Error', 500
 
         def send_pineconnector_command(order_type, symbol, risk, tp, sl, comment):
             if not symbol.endswith('.PRO') and symbol != 'USTEC100':
