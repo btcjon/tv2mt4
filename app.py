@@ -1,29 +1,16 @@
-from flask import Flask, request
+from flask import Flask
 from logger import setup_logger
 from webhook_handlers import handle_webhook
-from flask import request
 
 app = Flask(__name__)
 logger = setup_logger()
+
+@app.route('/webhook', methods=['POST'])
+def webhook():
+    return handle_webhook(request)
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=True)
-
-app = Flask(__name__)
-logger = setup_logger()
-
-class AirtableOperations:
-    def __init__(self):
-        self.airtable = Airtable(config.AIRTABLE_BASE_ID, config.AIRTABLE_TABLE_NAME, api_key=config.AIRTABLE_API_KEY)
-        self.logger = logging.getLogger(__name__)
-        self.logger.propagate = False
-
-    def get_matching_record(self, symbol):
-        symbol_without_pro = symbol.replace('.PRO', '')
-        records = self.airtable.get_all(formula=f"{{Symbol}} = '{symbol_without_pro}'")
-        return records[0] if records else None
-
-    def update_airtable_field(self, symbol, field, value):
         try:
             record = self.get_matching_record(symbol)
             action = 'update' if value not in [False, None] else 'clear'
