@@ -14,7 +14,7 @@ Each task is prepended with its current status. There are only 3 statuses allowe
 
 1. **Flask App Setup** (File: `app.py`)
     - Done: Make new blank `app.py` file
-    - Incomplete: Keep only the Flask app initialization, configuration, and `if __name__ == "__main__":` block in this file. Ensure Flask app (`Flask(__name__)`) and global configurations are defined here. `if __name__ == "__main__":` should contain only the `app.run()` call with necessary parameters.
+    - Done: Keep only the Flask app initialization, configuration, and `if __name__ == "__main__":` block in this file. Ensure Flask app (`Flask(__name__)`) and global configurations are defined here. `if __name__ == "__main__":` should contain only the `app.run()` call with necessary parameters.
 
 2. **Logging Configuration** (File: `logger.py`)
     - Done: Create a file named `logger.py`.
