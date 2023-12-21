@@ -1,6 +1,7 @@
 from flask import Flask
 from logger import setup_logger
-from webhook_handlers import webhook
+from webhook_handlers import handle_webhook
+from flask import request
 
 app = Flask(__name__)
 logger = setup_logger()
