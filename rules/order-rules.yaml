@@ -3,6 +3,7 @@ rules:
     conditions:
       - type: "order"
       - order-type: "long"
+      - order-type: "long"
     actions:
       - action: "send_to_pineconnector"
         risk: 1
@@ -13,6 +14,7 @@ rules:
   - name: "Close Long Order"
     conditions:
       - type: "order"
+      - order-type: "closelong"
       - order-type: "closelong"
     actions:
       - action: "send_to_pineconnector"
@@ -25,6 +27,7 @@ rules:
     conditions:
       - type: "order"
       - order-type: "short"
+      - order-type: "short"
     actions:
       - action: "send_to_pineconnector"
         risk: 1
@@ -36,6 +39,7 @@ rules:
     conditions:
       - type: "order"
       - order-type: "closeshort"
+      - order-type: "closeshort"
     actions:
       - action: "send_to_pineconnector"
         comment: "7-0-30"
@@ -46,6 +50,8 @@ rules:
   - name: "Non-Entry Order"
     conditions:
       - type: "order"
+      - order-type: "long"
+      - entry: false
       - entry: false
     actions:
       - action: "send_to_pineconnector"
@@ -55,3 +61,10 @@ rules:
         tp: null
         entry: false
 
+  - name: "Non-Entry Short Order"
+    conditions:
+      - type: "order"
+      - order-type: "short"
+      - entry: false
+    actions:
+      - action: "send_to_pineconnector"
