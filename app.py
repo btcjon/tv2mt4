@@ -262,18 +262,6 @@ def webhook():
 
                     return '', 200
 
-                    # ... rest of the long and short order handling logic ...
-
-                    return '', 200
-
-            # ... rest of the long and short order handling logic ...
-
-            # Add a default return at the end of the function
-            return '', 200
-        except Exception as e:
-            app.logger.exception(f"An unhandled exception occurred in the webhook function: {e}")
-            return 'Error', 500
-
         def send_pineconnector_command(order_type, symbol, risk, tp, sl, comment):
             if not symbol.endswith('.PRO') and symbol != 'USTEC100':
                 symbol += '.PRO'  # append '.PRO' to the symbol only if it's not already there
