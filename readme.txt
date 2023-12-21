@@ -64,6 +64,10 @@ Specific to type=update messages:
         keyword=up (change Trend field to 'up')
         keyword=down (change Trend field to 'down')
 
+    BB (boolean) (not to be updated but to be checked in event of BB_Filter = True)
+        keyword=BB (true)
+        keyword=BBOFF (false)
+
 Specific to type=order messages:
     
     order-type: defines the type of order
@@ -150,10 +154,6 @@ Long#
 Short#
     1. if order-type=short was sent, increment the number by '1'
     2. if order-type=closeshort was sent, change number to '0'
-    BB (boolean)
-        type=update AND any of the following:
-        keyword=BB (true)
-        keyword=BBOFF (false)
 
     Handling of the USTEC100 symbol:
         - If the symbol is 'NAS100' or 'NAS100.PRO', it is replaced with 'USTEC100' before processing.
