@@ -23,7 +23,7 @@ Each task is prepended with its current status. There are only 3 statuses allowe
 3. **AirtableOperations Class** (File: `airtable_operations.py`)
     - Done: Create a file named `airtable_operations.py`.
     - Done: Move the `AirtableOperations` class with all its methods to this file.
-    - Incomplete: Include all necessary imports in this file. Import `AirtableOperations` in `app.py` for instantiation and use.
+    - Done: Include all necessary imports in this file. Import `AirtableOperations` in `app.py` for instantiation and use.
 
 4. **Webhook Handlers** (File: `webhook_handlers.py`)
     - Done: Create a file named `webhook_handlers.py`.
