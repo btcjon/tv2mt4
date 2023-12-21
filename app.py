@@ -202,133 +202,159 @@ def webhook():
                 filters_failed = []
 
                 # Check each filter and append the result to the corresponding list
-                if long_count > 0 or (trend == 'up' and not resistance and not td9sell):
-                    filters_passed.append('Long# > 0' if long_count > 0 else 'Trend is up and no resistance or TD9sell')
-                else:
-                    filters_failed.append('Long# <= 0' if long_count <= 0 else 'Trend is not up or resistance or TD9sell present')
+                if order_type == 'long':
+                    if long_count > 0:
+                        filters_passed.append('Long# > 0')
+                    else:
+                        filters_failed.append('Long# <= 0')
+                    if trend == 'up':
+                        filters_passed.append('Trend is up')
+                    else:
+                        filters_failed.append('Trend is not up')
+                    if not resistance:
+                        filters_passed.append('No resistance')
+                    else:
+                        filters_failed.append('Resistance present')
+                    if not td9sell:
+                        filters_passed.append('No TD9sell')
+                    else:
+                        filters_failed.append('TD9sell present')
 
-                if short_count > 0 or (trend == 'down' and not support and not td9buy):
-                    filters_passed.append('Short# > 0' if short_count > 0 else 'Trend is down and no support or TD9buy')
-                else:
-                    filters_failed.append('Short# <= 0' if short_count <= 0 else 'Trend is not down or support or TD9buy present')
+                    if order_type == 'short':
+                        if short_count > 0:
+                            filters_passed.append('Short# > 0')
+                        else:
+                            filters_failed.append('Short# <= 0')
+                        if trend == 'down':
+                            filters_passed.append('Trend is down')
+                        else:
+                            filters_failed.append('Trend is not down')
+                        if not support:
+                            filters_passed.append('No support')
+                        else:
+                            filters_failed.append('Support present')
+                        if not td9buy:
+                            filters_passed.append('No TD9buy')
+                        else:
+                            filters_failed.append('TD9buy present')
 
-                # Log the results of the filter checks
-                if filters_passed:
-                    app.logger.info(f"Order for {symbol} passed filters: {', '.join(filters_passed)}")
-                if filters_failed:
-                    app.logger.info(f"Order for {symbol} did not pass filters: {', '.join(filters_failed)}")
+                        # Log the results of the filter checks
+                        if filters_passed:
+                            app.logger.info(f"Order for {symbol} passed filters: {', '.join(filters_passed)}")
+                        if filters_failed:
+                            app.logger.info(f"Order for {symbol} did not pass filters: {', '.join(filters_failed)}")
 
-                # If any filters failed, do not send the order to PineConnector
-                if filters_failed:
+                        # If any filters failed, do not send the order to PineConnector
+                        if filters_failed:
+                            return '', 200
+
+                        # If all filters passed, send the order to PineConnector
+                        app.logger.info(f"Sending order to PineConnector for symbol: {symbol}")
+                        send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
+
+                        # Update Airtable fields if necessary
+                        if order_type == 'long' and long_count == 0:
+                            airtable_operations.update_airtable_field(symbol, 'State Long', 'open')
+                            airtable_operations.increment_airtable_field(symbol, 'Long#')
+                        elif order_type == 'short' and short_count == 0:
+                            airtable_operations.update_airtable_field(symbol, 'State Short', 'open')
+                            airtable_operations.increment_airtable_field(symbol, 'Short#')
+
                     return '', 200
 
-                # If all filters passed, send the order to PineConnector
-                app.logger.info(f"Sending order to PineConnector for symbol: {symbol}")
-                send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
+                    # ... rest of the long and short order handling logic ...
 
-                # Update Airtable fields if necessary
-                if order_type == 'long' and long_count == 0:
-                    airtable_operations.update_airtable_field(symbol, 'State Long', 'open')
-                    airtable_operations.increment_airtable_field(symbol, 'Long#')
-                elif order_type == 'short' and short_count == 0:
-                    airtable_operations.update_airtable_field(symbol, 'State Short', 'open')
-                    airtable_operations.increment_airtable_field(symbol, 'Short#')
+                    return '', 200
 
-            return '', 200
+                # Add a default return at the end of the function
+                return '', 200
+            except Exception as e:
+                app.logger.exception(f"An unhandled exception occurred in the webhook function: {e}")
+                # Removed duplicate exception log
+                return 'Error', 500
+                    # Add the check for Long# and Short# fields being greater than '0'
+                    if order_type == 'long':
+                        long_count = int(record['fields'].get('Long#', 0))
+                        trend = record['fields'].get('Trend')
+                        resistance = record['fields'].get('Resistance', False)
+                        td9sell = record['fields'].get('TD9sell', False)
+                        # Check if Long# is greater than 0 or if trend is up and no resistance or TD9sell signal is present
+                        if long_count > 0:
+                            app.logger.info(f"Long# filter bypassed: Long# for {symbol} is greater than 0.")
+                        if trend == 'up':
+                            app.logger.info(f"Trend filter passed: Trend for {symbol} is up.")
+                        if resistance:
+                            app.logger.info(f"Resistance filter failed: Resistance for {symbol} is present.")
+                        if td9sell:
+                            app.logger.info(f"TD9sell filter failed: TD9sell for {symbol} is present.")
+                        if long_count > 0 or (trend == 'up' and not resistance and not td9sell):
+                            app.logger.info(f"Sending PineConnector command for {symbol} as all filters passed or Long# is greater than 0.")
+                            app.logger.info(f"Sending long order to PineConnector for symbol: {symbol}")
+                            send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
+                            if long_count == 0:  # Only update if Long# was 0
+                                airtable_operations.update_airtable_field(symbol, 'State Long', 'open')
+                                airtable_operations.increment_airtable_field(symbol, 'Long#')
+                    elif order_type == 'short':
+                        short_count = int(record['fields'].get('Short#', 0))
+                        trend = record['fields'].get('Trend')
+                        support = record['fields'].get('Support', False)
+                        td9buy = record['fields'].get('TD9buy', False)
+                        # Check if Short# is greater than 0 or if trend is down and no support or TD9buy signal is present
+                        if short_count > 0:
+                            app.logger.info(f"Short# filter bypassed: Short# for {symbol} is greater than 0.")
+                        if trend == 'down':
+                            app.logger.info(f"Trend filter passed: Trend for {symbol} is down.")
+                        if support:
+                            app.logger.info(f"Support filter failed: Support for {symbol} is present.")
+                        if td9buy:
+                            app.logger.info(f"TD9buy filter failed: TD9buy for {symbol} is present.")
+                        if short_count > 0 or (trend == 'down' and not support and not td9buy):
+                            app.logger.info(f"Sending PineConnector command for {symbol} as all filters passed or Short# is greater than 0.")
+                            app.logger.info(f"Sending short order to PineConnector for symbol: {symbol}")
+                            send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
+                            if short_count == 0:  # Only update if Short# was 0
+                                airtable_operations.update_airtable_field(symbol, 'State Short', 'open')
+                                airtable_operations.increment_airtable_field(symbol, 'Short#')
+                    elif order_type in ['closelong', 'closeshort']:
+                        app.logger.info(f"Sending close order to PineConnector for symbol: {symbol}")
+                        send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
+                        airtable_operations.update_airtable_field(symbol, f'State {order_type[5:].capitalize()}', 'closed')
+                        airtable_operations.reset_airtable_field(symbol, f'{order_type[5:].capitalize()}#')
 
-            # ... rest of the long and short order handling logic ...
+                    # ... rest of the long and short order handling logic ...
 
-            return '', 200
+                    return '', 200
 
-        # Add a default return at the end of the function
-        return '', 200
-    except Exception as e:
-        app.logger.exception(f"An unhandled exception occurred in the webhook function: {e}")
-        # Removed duplicate exception log
-        return 'Error', 500
-            # Add the check for Long# and Short# fields being greater than '0'
-            if order_type == 'long':
-                long_count = int(record['fields'].get('Long#', 0))
-                trend = record['fields'].get('Trend')
-                resistance = record['fields'].get('Resistance', False)
-                td9sell = record['fields'].get('TD9sell', False)
-                # Check if Long# is greater than 0 or if trend is up and no resistance or TD9sell signal is present
-                if long_count > 0:
-                    app.logger.info(f"Long# filter bypassed: Long# for {symbol} is greater than 0.")
-                if trend == 'up':
-                    app.logger.info(f"Trend filter passed: Trend for {symbol} is up.")
-                if resistance:
-                    app.logger.info(f"Resistance filter failed: Resistance for {symbol} is present.")
-                if td9sell:
-                    app.logger.info(f"TD9sell filter failed: TD9sell for {symbol} is present.")
-                if long_count > 0 or (trend == 'up' and not resistance and not td9sell):
-                    app.logger.info(f"Sending PineConnector command for {symbol} as all filters passed or Long# is greater than 0.")
-                    app.logger.info(f"Sending long order to PineConnector for symbol: {symbol}")
-                    send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
-                    if long_count == 0:  # Only update if Long# was 0
-                        airtable_operations.update_airtable_field(symbol, 'State Long', 'open')
-                        airtable_operations.increment_airtable_field(symbol, 'Long#')
-            elif order_type == 'short':
-                short_count = int(record['fields'].get('Short#', 0))
-                trend = record['fields'].get('Trend')
-                support = record['fields'].get('Support', False)
-                td9buy = record['fields'].get('TD9buy', False)
-                # Check if Short# is greater than 0 or if trend is down and no support or TD9buy signal is present
-                if short_count > 0:
-                    app.logger.info(f"Short# filter bypassed: Short# for {symbol} is greater than 0.")
-                if trend == 'down':
-                    app.logger.info(f"Trend filter passed: Trend for {symbol} is down.")
-                if support:
-                    app.logger.info(f"Support filter failed: Support for {symbol} is present.")
-                if td9buy:
-                    app.logger.info(f"TD9buy filter failed: TD9buy for {symbol} is present.")
-                if short_count > 0 or (trend == 'down' and not support and not td9buy):
-                    app.logger.info(f"Sending PineConnector command for {symbol} as all filters passed or Short# is greater than 0.")
-                    app.logger.info(f"Sending short order to PineConnector for symbol: {symbol}")
-                    send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
-                    if short_count == 0:  # Only update if Short# was 0
-                        airtable_operations.update_airtable_field(symbol, 'State Short', 'open')
-                        airtable_operations.increment_airtable_field(symbol, 'Short#')
-            elif order_type in ['closelong', 'closeshort']:
-                app.logger.info(f"Sending close order to PineConnector for symbol: {symbol}")
-                send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
-                airtable_operations.update_airtable_field(symbol, f'State {order_type[5:].capitalize()}', 'closed')
-                airtable_operations.reset_airtable_field(symbol, f'{order_type[5:].capitalize()}#')
+                # Add a default return at the end of the function
+                return '', 200
+            except Exception as e:
+                app.logger.exception(f"An unhandled exception occurred in the webhook function: {e}")
+                # Removed duplicate exception log
+                return 'Error', 500
+                    return '', 200
 
-            # ... rest of the long and short order handling logic ...
+                # Add a default return at the end of the function
+                return '', 200
+            except Exception as e:
+                app.logger.exception(f"An unhandled exception occurred in the webhook function: {e}")
+                # Removed duplicate exception log
+                return 'Error', 500
 
-            return '', 200
+        def send_pineconnector_command(order_type, symbol, risk, tp, sl, comment):
+            if not symbol.endswith('.PRO') and symbol != 'USTEC100':
+                symbol += '.PRO'  # append '.PRO' to the symbol only if it's not already there
+            pineconnector_command = f"{config.PINECONNECTOR_LICENSE_ID},{order_type},{symbol}"
+            if risk:
+                pineconnector_command += f",risk={risk}"
+            if tp:
+                pineconnector_command += f",tp={tp}"
+            if sl:
+                pineconnector_command += f",sl={sl}"
+            if comment:
+                # Ensure the comment is included with only a single set of quotes
+                pineconnector_command += f',comment={comment}'
+            response = requests.post(config.PINECONNECTOR_WEBHOOK_URL, data=pineconnector_command)
+            app.logger.debug(f"PineConnector response: {response.status_code} {response.reason} - {response.text}")
 
-        # Add a default return at the end of the function
-        return '', 200
-    except Exception as e:
-        app.logger.exception(f"An unhandled exception occurred in the webhook function: {e}")
-        # Removed duplicate exception log
-        return 'Error', 500
-            return '', 200
-
-        # Add a default return at the end of the function
-        return '', 200
-    except Exception as e:
-        app.logger.exception(f"An unhandled exception occurred in the webhook function: {e}")
-        # Removed duplicate exception log
-        return 'Error', 500
-
-def send_pineconnector_command(order_type, symbol, risk, tp, sl, comment):
-    if not symbol.endswith('.PRO') and symbol != 'USTEC100':
-        symbol += '.PRO'  # append '.PRO' to the symbol only if it's not already there
-    pineconnector_command = f"{config.PINECONNECTOR_LICENSE_ID},{order_type},{symbol}"
-    if risk:
-        pineconnector_command += f",risk={risk}"
-    if tp:
-        pineconnector_command += f",tp={tp}"
-    if sl:
-        pineconnector_command += f",sl={sl}"
-    if comment:
-        # Ensure the comment is included with only a single set of quotes
-        pineconnector_command += f',comment={comment}'
-    response = requests.post(config.PINECONNECTOR_WEBHOOK_URL, data=pineconnector_command)
-    app.logger.debug(f"PineConnector response: {response.status_code} {response.reason} - {response.text}")
-
-if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5000, debug=True)
+        if __name__ == "__main__":
+            app.run(host='0.0.0.0', port=5000, debug=True)
