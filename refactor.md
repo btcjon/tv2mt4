@@ -18,7 +18,7 @@ Each task is prepended with its current status. There are only 3 statuses allowe
 
 2. **Logging Configuration** (File: `logger.py`)
     - Done: Create a file named `logger.py`.
-    - Incomplete: Move all logging setup code (handler creation, level setting, formatter definition) to this file. Define a function, e.g., `setup_logger()`, to configure and return a logger instance. Import and use this function in `app.py` and other modules as needed.
+    - Done: Move all logging setup code (handler creation, level setting, formatter definition) to this file. Define a function, e.g., `setup_logger()`, to configure and return a logger instance. Import and use this function in `app.py` and other modules as needed.
 
 3. **AirtableOperations Class** (File: `airtable_operations.py`)
     - Done: Create a file named `airtable_operations.py`.
