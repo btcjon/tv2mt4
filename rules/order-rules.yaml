@@ -2,6 +2,9 @@
 rules:
   - name: "Long Order"
     conditions:
+      - if: "symbol in ['NAS100', 'NAS100.PRO']"
+        then:
+          - symbol: "USTEC100"
       - type: "order"
       - order-type: "long"
       - entry: true
@@ -25,6 +28,9 @@ rules:
         tp: null
   - name: "Close Long Order"
     conditions:
+      - if: "symbol in ['NAS100', 'NAS100.PRO']"
+        then:
+          - symbol: "USTEC100"
       - type: "order"
       - order-type: "closelong"
       - filter_time: true
@@ -44,6 +50,9 @@ rules:
         entry: null
   - name: "Short Order"
     conditions:
+      - if: "symbol in ['NAS100', 'NAS100.PRO']"
+        then:
+          - symbol: "USTEC100"
       - type: "order"
       - order-type: "short"
       - order-type: "short"
@@ -61,6 +70,9 @@ rules:
         tp: null
   - name: "Close Short Order"
     conditions:
+      - if: "symbol in ['NAS100', 'NAS100.PRO']"
+        then:
+          - symbol: "USTEC100"
       - type: "order"
       - order-type: "closeshort"
       - filter_time: true
@@ -80,6 +92,9 @@ rules:
         entry: null
   - name: "Non-Entry Order"
     conditions:
+      - if: "symbol in ['NAS100', 'NAS100.PRO']"
+        then:
+          - symbol: "USTEC100"
       - type: "order"
       - order-type: "long"
       - entry: false
@@ -101,6 +116,9 @@ rules:
 
   - name: "Non-Entry Short Order"
     conditions:
+      - if: "symbol in ['NAS100', 'NAS100.PRO']"
+        then:
+          - symbol: "USTEC100"
       - type: "order"
       - order-type: "short"
       - entry: false
