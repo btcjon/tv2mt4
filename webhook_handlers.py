@@ -13,7 +13,7 @@ def webhook():
         entry = message_dict.get('entry')
 
         if message_type == 'update':
-            return handle_update_message(symbol, message_dict)
+             return handle_update_message(symbol, message_dict)
         elif message_type == 'order':
             return handle_order_message(symbol, message_dict, entry)
 
