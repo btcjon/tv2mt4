@@ -28,7 +28,7 @@ Each task is prepended with its current status. There are only 3 statuses allowe
 4. **Webhook Handlers** (File: `webhook_handlers.py`)
     - Done: Create a file named `webhook_handlers.py`.
     - Done: Transfer webhook request handling logic from `app.py` to this file.
-    - Incomplete: Include request parsing, decision-making, and response generation. Define separate functions for each logical part. Import and use these functions in Flask routes in `app.py`.
+    - Done: Include request parsing, decision-making, and response generation. Define separate functions for each logical part. Import and use these functions in Flask routes in `app.py`.
 
 5. **Utility Functions** (File: `utils.py`)
     - Done: Create a file named `utils.py`.

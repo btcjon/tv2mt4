@@ -1,71 +1,27 @@
-
 from flask import request
 import logging
 import config
 from airtable_operations import AirtableOperations
+from utils import send_pineconnector_command, parse_webhook_data, handle_update_message, handle_order_message
 from utils import send_pineconnector_command
 
 def webhook():
     try:
-        data = request.data.decode('utf-8')
-        app.logger.debug(f"Received webhook data: {data}")
-        parts = data.split(',')
-
-        # Only include parts that can be split into exactly two items with '='
-        message_dict = {part.split('=')[0]: part.split('=')[1] for part in parts if '=' in part and len(part.split('=')) == 2}
-        message_type = message_dict.get('type')
+        message_dict = parse_webhook_data(request.data)
+        message_type = message_dict.get('message_type')
         symbol = message_dict.get('symbol')
-        entry = message_dict.get('entry', 'true').lower() == 'true'  # Default to true if not specified
-        if symbol in ['NAS100', 'NAS100.PRO']:
-            symbol = 'USTEC100'
+        entry = message_dict.get('entry')
 
         if message_type == 'update':
-            keyword = message_dict.get('keyword')
-            field_name = None
-            update_value = None
-            if keyword == 'resistance':
-                field_name = 'Resistance'
-                update_value = True
-            elif keyword == 'resistanceOFF':
-                field_name = 'Resistance'
-                update_value = False
-            elif keyword == 'support':
-                field_name = 'Support'
-                update_value = True
-            elif keyword == 'supportOFF':
-                field_name = 'Support'
-                update_value = False
-            elif keyword == 'TD9buy':
-                field_name = 'TD9buy'
-                update_value = True
-            elif keyword == 'TD9buyOFF':
-                field_name = 'TD9buy'
-                update_value = False
-            elif keyword == 'TD9sell':
-                field_name = 'TD9sell'
-                update_value = True
-            elif keyword == 'TD9sellOFF':
-                field_name = 'TD9sell'
-                update_value = False
-            elif keyword == 'up':
-                field_name = 'Trend'
-                update_value = 'up'
-            elif keyword == 'down':
-                field_name = 'Trend'
-                update_value = 'down'
-            app.logger.info(f"Update: {symbol} - {keyword} received")
-            try:
-                if field_name is not None and update_value is not None:
-                    airtable_operations.update_airtable_field(symbol, field_name, update_value)
-                    app.logger.info(f"Airtable Update: {symbol} - {field_name} set to {update_value}")
-                else:
-                    app.logger.warning(f"Update Error: {symbol} - Unrecognized keyword '{keyword}'")
-                return '', 200
-            except Exception as e:
-                app.logger.error(f"Update Exception: {symbol} - {e}")
-                return 'Error', 500
+            return handle_update_message(symbol, message_dict)
         elif message_type == 'order':
-            # ... rest of the webhook function ...
+            return handle_order_message(symbol, message_dict, entry)
+
+        # Add a default return at the end of the function
+        return '', 200
+    except Exception as e:
+        app.logger.exception(f"An unhandled exception occurred in the webhook function: {e}")
+        return 'Error', 500
             order_type = message_dict.get('order-type')
             risk = message_dict.get('risk')
             tp = message_dict.get('tp')
