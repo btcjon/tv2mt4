@@ -5,9 +5,11 @@ rules:
       - order-type: "long"
     actions:
       - action: "send_to_pineconnector"
-        risk: "1"
+        risk: 1
         comment: "7-0-30"
         entry: true
+        sl: null
+        tp: null
   - name: "Close Long Order"
     conditions:
       - type: "order"
@@ -15,15 +17,21 @@ rules:
     actions:
       - action: "send_to_pineconnector"
         comment: "7-0-30"
+        risk: null
+        sl: null
+        tp: null
+        entry: null
   - name: "Short Order"
     conditions:
       - type: "order"
       - order-type: "short"
     actions:
       - action: "send_to_pineconnector"
-        risk: "1"
+        risk: 1
         comment: "7-0-30"
         entry: true
+        sl: null
+        tp: null
   - name: "Close Short Order"
     conditions:
       - type: "order"
@@ -31,27 +39,19 @@ rules:
     actions:
       - action: "send_to_pineconnector"
         comment: "7-0-30"
-  - name: "Close Long Order"
+        risk: null
+        sl: null
+        tp: null
+        entry: null
+  - name: "Non-Entry Order"
     conditions:
       - type: "order"
-      - order-type: "closelong"
+      - entry: false
     actions:
       - action: "send_to_pineconnector"
-        comment: "7-0-30"
-  - name: "Short Order"
-    conditions:
-      - type: "order"
-      - order-type: "short"
-    actions:
-      - action: "send_to_pineconnector"
-        risk: "1"
-        comment: "7-0-30"
-        entry: true
-  - name: "Close Short Order"
-    conditions:
-      - type: "order"
-      - order-type: "closeshort"
-    actions:
-      - action: "send_to_pineconnector"
-        comment: "7-0-30"
+        comment: "Non-entry order - bypass filters"
+        risk: null
+        sl: null
+        tp: null
+        entry: false
 
