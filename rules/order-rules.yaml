@@ -3,7 +3,18 @@ rules:
     conditions:
       - type: "order"
       - order-type: "long"
+      - entry: true
+      - filter_time: true
+      - bb_filter: true
+      - trend: "up"
+      - no_resistance: true
+      - no_td9_sell: true
       - order-type: "long"
+      - filter_time: true
+      - bb_filter: true
+      - trend: "down"
+      - no_support: true
+      - no_td9_buy: true
     actions:
       - action: "send_to_pineconnector"
         risk: 1
@@ -15,7 +26,14 @@ rules:
     conditions:
       - type: "order"
       - order-type: "closelong"
+      - filter_time: true
+      - bb_filter: true
       - order-type: "closelong"
+      - filter_time: true
+      - bb_filter: true
+      - trend: "down"
+      - no_support: true
+      - no_td9_buy: true
     actions:
       - action: "send_to_pineconnector"
         comment: "7-0-30"
@@ -28,6 +46,11 @@ rules:
       - type: "order"
       - order-type: "short"
       - order-type: "short"
+      - filter_time: true
+      - bb_filter: true
+      - trend: "down"
+      - no_support: true
+      - no_td9_buy: true
     actions:
       - action: "send_to_pineconnector"
         risk: 1
@@ -39,7 +62,14 @@ rules:
     conditions:
       - type: "order"
       - order-type: "closeshort"
+      - filter_time: true
+      - bb_filter: true
       - order-type: "closeshort"
+      - filter_time: true
+      - bb_filter: true
+      - trend: "down"
+      - no_support: true
+      - no_td9_buy: true
     actions:
       - action: "send_to_pineconnector"
         comment: "7-0-30"
@@ -52,7 +82,14 @@ rules:
       - type: "order"
       - order-type: "long"
       - entry: false
+      - filter_time: true
+      - bb_filter: true
       - entry: false
+      - filter_time: true
+      - bb_filter: true
+      - trend: "down"
+      - no_support: true
+      - no_td9_buy: true
     actions:
       - action: "send_to_pineconnector"
         comment: "Non-entry order - bypass filters"
@@ -66,5 +103,12 @@ rules:
       - type: "order"
       - order-type: "short"
       - entry: false
+      - filter_time: true
+      - bb_filter: true
+      - filter_time: true
+      - bb_filter: true
+      - trend: "down"
+      - no_support: true
+      - no_td9_buy: true
     actions:
       - action: "send_to_pineconnector"
