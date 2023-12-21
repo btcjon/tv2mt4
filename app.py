@@ -1,10 +1,18 @@
-from flask import Flask, request
-import logging
-import requests
-import config
-from datetime import datetime
-from datetime import time
-from airtable import Airtable
+from flask import Flask
+from logger import setup_logger
+from webhook_handlers import webhook
+
+app = Flask(__name__)
+logger = setup_logger()
+
+# ... remove the logging setup code ...
+
+# ... remove the AirtableOperations class and its methods ...
+
+# ... remove the webhook function ...
+
+if __name__ == "__main__":
+    app.run(host='0.0.0.0', port=5000, debug=True)
 
 app = Flask(__name__)
 handler = logging.StreamHandler()
