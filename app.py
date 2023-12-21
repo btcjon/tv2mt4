@@ -13,12 +13,13 @@ formatter = logging.Formatter('%(asctime)s %(message)s', datefmt='%Y-%m-%d %H:%M
 handler.setFormatter(formatter)
 app.logger.addHandler(handler)
 app.logger.setLevel(logging.INFO)  # Set to INFO to reduce the verbosity of the logs
-app.logger.propagate = True
+app.logger.propagate = False
 
 class AirtableOperations:
     def __init__(self):
         self.airtable = Airtable(config.AIRTABLE_BASE_ID, config.AIRTABLE_TABLE_NAME, api_key=config.AIRTABLE_API_KEY)
         self.logger = logging.getLogger(__name__)
+        self.logger.propagate = False
 
     def get_matching_record(self, symbol):
         symbol_without_pro = symbol.replace('.PRO', '')
