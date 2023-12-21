@@ -5,6 +5,9 @@ rules:
       - if: "symbol in ['NAS100', 'NAS100.PRO']"
         then:
           - symbol: "USTEC100"
+      - if: "current_time >= config.FILTER_TIME_START and current_time <= config.FILTER_TIME_END"
+        then:
+          - action: "skip"
       - type: "order"
       - order-type: "long"
       - entry: true
@@ -31,6 +34,9 @@ rules:
       - if: "symbol in ['NAS100', 'NAS100.PRO']"
         then:
           - symbol: "USTEC100"
+      - if: "current_time >= config.FILTER_TIME_START and current_time <= config.FILTER_TIME_END"
+        then:
+          - action: "skip"
       - type: "order"
       - order-type: "closelong"
       - filter_time: true
@@ -53,9 +59,13 @@ rules:
       - if: "symbol in ['NAS100', 'NAS100.PRO']"
         then:
           - symbol: "USTEC100"
+      - if: "current_time >= config.FILTER_TIME_START and current_time <= config.FILTER_TIME_END"
+        then:
+          - action: "skip"
       - type: "order"
       - order-type: "short"
       - order-type: "short"
+      - entry: true
       - filter_time: true
       - bb_filter: true
       - trend: "down"
@@ -73,6 +83,9 @@ rules:
       - if: "symbol in ['NAS100', 'NAS100.PRO']"
         then:
           - symbol: "USTEC100"
+      - if: "current_time >= config.FILTER_TIME_START and current_time <= config.FILTER_TIME_END"
+        then:
+          - action: "skip"
       - type: "order"
       - order-type: "closeshort"
       - filter_time: true
@@ -95,6 +108,9 @@ rules:
       - if: "symbol in ['NAS100', 'NAS100.PRO']"
         then:
           - symbol: "USTEC100"
+      - if: "current_time >= config.FILTER_TIME_START and current_time <= config.FILTER_TIME_END"
+        then:
+          - action: "skip"
       - type: "order"
       - order-type: "long"
       - entry: false
@@ -119,6 +135,9 @@ rules:
       - if: "symbol in ['NAS100', 'NAS100.PRO']"
         then:
           - symbol: "USTEC100"
+      - if: "current_time >= config.FILTER_TIME_START and current_time <= config.FILTER_TIME_END"
+        then:
+          - action: "skip"
       - type: "order"
       - order-type: "short"
       - entry: false
