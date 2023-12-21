@@ -6,6 +6,5 @@ from utils import send_pineconnector_command
 import logging
 
 def webhook():
-    # ... [Insert the logic of the webhook function here] ...
-
-# This file should contain the logic you previously had in the 'webhook' function in 'app.py' now app_old.py
+    # ... [Insert the entire logic of the webhook function from app_old.py here] ...
+    # This includes the entire block of code under the webhook() function in app_old.py
