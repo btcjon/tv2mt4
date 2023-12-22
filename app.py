@@ -10,11 +10,12 @@ from airtable import Airtable
 app = Flask(__name__)
 handler = logging.StreamHandler()
 handler.setLevel(logging.INFO)  # Set to INFO to reduce the verbosity of the logs
+logging.Formatter.converter = time.localtime  # Use local time
 formatter = logging.Formatter('%(asctime)s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 handler.setFormatter(formatter)
 app.logger.addHandler(handler)
 app.logger.setLevel(logging.INFO)  # Set to INFO to reduce the verbosity of the logs
-app.logger.propagate = True
+app.logger.propagate = False
 
 class AirtableOperations:
     def __init__(self):
@@ -252,7 +253,6 @@ def webhook():
         # Add a default return at the end of the function
         return '', 200
     except Exception as e:
-        app.logger.exception(f"An unhandled exception occurred in the webhook function: {e}")
         app.logger.exception(f"An unhandled exception occurred in the webhook function: {e}")
         return 'Error', 500
 
