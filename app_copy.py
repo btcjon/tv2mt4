@@ -3,7 +3,7 @@ import logging
 import requests
 import config
 from datetime import datetime
-import time
+from datetime import time
 from airtable import Airtable
 
 app = Flask(__name__)
@@ -97,7 +97,7 @@ def webhook():
             symbol = 'USTEC100'
 
         if message_type == 'update':
-            keyword = message_dict.get('keyword').strip()
+            keyword = message_dict.get('keyword')
             field_name = None
             update_value = None
             if keyword == 'resistance':

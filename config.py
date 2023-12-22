@@ -12,6 +12,5 @@ FILTER_TD9 = True # filter by TD9
 FILTER_TREND = True # filter by trend up or down
 FILTER_TIME = True # make sure to not send orders as defined start and end of the restricted period in UTC 
 BB_Filter = True # check either state fileds for existence of this and dont send if it exists
-BB_Filter = True # check either state fileds for existence of this and dont send if it exists
 FILTER_TIME_START = time(21, 55)  # 9:55 PM UTC
 FILTER_TIME_END = time(23, 0)  # 11:00 PM UTC

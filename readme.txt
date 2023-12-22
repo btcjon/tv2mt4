@@ -1,6 +1,12 @@
+Goal is to refactor these rules into yaml code that can be read ultimately by 'business-rules' for python. We want an easy way to add/adjust rules and conditions easily.
+
 Incoming messages will adhere to a standardized syntax for simplicity and flexibility in parsing.
 
 Message information will be key-value paired using '=' and separated by commas.
+
+There are 2 major types of incoming messages:
+    1. update type = meant to update fields in airtable
+    2. order messages = meant to send to pineconnector IF they pass field value rules (filters)
 
 Here are definitions:
 
@@ -37,7 +43,7 @@ Specific to type=update messages:
         example3: type=update,symbol=USDCAD.PRO,keyword=TD9buyOn,tf=1H    
         example4: type=update,symbol=USDCAD,keyword=support
 
-    Airtable fields to update:
+    Action: Airtable fields to update:
     
     Resistance (boolean)
         type=update AND any of the following:
@@ -69,12 +75,25 @@ Specific to type=update messages:
         keyword=BBOFF (false)
 
 Specific to type=order messages:
+
+Note: config.py: we currently can globally enable disable certain "filters" that can keep orders from being sent to PineConnector with the following:
+
+    PINECONNECTOR_WEBHOOK_URL = 'https://pineconnector.net/webhook/'
+    PINECONNECTOR_LICENSE_ID = '6700960415957'
+    CHECK_STATE = True
+    FILTER_SNR = True # filter by SNR
+    FILTER_TD9 = True # filter by TD9
+    FILTER_TREND = True # filter by trend up or down
+    FILTER_TIME = True # make sure to not send orders as defined start and end of the restricted period in UTC 
+    BB_Filter = True # check either state fileds for existence of this and dont send if it exists
+    FILTER_TIME_START = time(21, 55)  # 9:55 PM UTC
+    FILTER_TIME_END = time(23, 0)  # 11:00 PM UTC
     
-    order-type: defines the type of order
-        example1: order-type=long
-        example2: order-type=short
-        example3: order-type=closelong
-        example4: order-type=closeshort
+order-type: defines the type of order
+    example1: order-type=long
+    example2: order-type=short
+    example3: order-type=closelong
+    example4: order-type=closeshort
 
     risk: defines the risk in an order (required for order-type=long and order-type=short)
         example1: risk=1
@@ -104,7 +123,10 @@ Specific to type=order messages:
 
 Handling of type=order messages:
 
-type=order messages are meant to be sent to PineConnector only if they pass the following conditions:
+type=order messages
+Action: check airtable values that serve as filters and can keep the order from being sent to PineConnector
+Action: send to PineConnector ( send outgoing webhook in a specific format)
+
 
     entry: indicates whether the order should bypass certain filters
         - If entry=true, the order must pass all active filters as defined in the config.py settings.
@@ -139,8 +161,7 @@ BB Restriction: No orders should be sent if 'BB' is present in 'State Long' or '
             - 6700960415957,short,EURAUD,risk=1,tp=0.07,sl=0.1,comment="7-0-30"
         - The FILTER_TIME and BB_Filter checks are applied. Additional filters are applied based on the 'entry' parameter.
 
-
-Post-order Airtable field updates:
+Action: Post-order Airtable field updates:
 
 State Long
     1. if order-type=long was sent change field to 'open' (if it is not already)
