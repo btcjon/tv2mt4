@@ -35,10 +35,10 @@ class AirtableOperations:
         try:
             record = self.get_matching_record(symbol)
             action = 'update' if value not in [False, None] else 'clear'
-            self.logger.debug(f"Attempting to {action} {field} for {symbol} to {value}")
+            #self.logger.debug(f"Attempting to {action} {field} for {symbol} to {value}")
             if record:
                 self.airtable.update(record['id'], {field: value})
-                self.logger.info(f"Successfully {action}d {field} for {symbol} to {value} in Airtable")
+                self.logger.info(f"{symbol} {action}d {field} to {value} in AT")
             else:
                 self.logger.warning(f"No matching record found for symbol: {symbol}")
         except requests.exceptions.ConnectionError as e:
@@ -60,7 +60,7 @@ class AirtableOperations:
                 count = int(count) + 1
                 try:
                     self.airtable.update(record['id'], {field: count})  # Send an integer value
-                    self.logger.info(f"Successfully incremented {field} for {symbol} by 1 in Airtable")
+                    self.logger.info(f"{symbol} incremented {field} by 1 in AT")
                 except requests.exceptions.HTTPError as http_err:
                     self.logger.error(f"HTTP error occurred when incrementing {field} for {symbol}: {http_err.response.text}")
                 except Exception as e:
@@ -77,7 +77,7 @@ class AirtableOperations:
             record = self.get_matching_record(symbol)
             if record:
                 self.airtable.update(record['id'], {field: 0})  # Send an integer value for the reset
-                self.logger.info(f"Successfully reset {field} for {symbol} in Airtable")
+                self.logger.info(f"{symbol} reset {field} in AT")
             else:
                 self.logger.warning(f"No matching record found for symbol: {symbol}")
         except requests.exceptions.HTTPError as http_err:
@@ -140,12 +140,12 @@ def webhook():
             try:
                 if field_name is not None and update_value is not None:
                     airtable_operations.update_airtable_field(symbol, field_name, update_value)
-                    app.logger.info(f"Airtable Update: {symbol} - {field_name} set to {update_value}")
+                    app.logger.info(f"{symbol} AT update - {field_name} set to {update_value}")
                 else:
-                    app.logger.warning(f"Update Error: {symbol} - Unrecognized keyword '{keyword}'")
+                    app.logger.warning(f"{symbol} Update Error: Unrecognized keyword '{keyword}'")
                 return '', 200
             except Exception as e:
-                app.logger.error(f"Update Exception: {symbol} - {e}")
+                app.logger.error(f"{symbol} Update Exception: {e}")
                 return 'Error', 500
         elif message_type == 'order':
             # ... rest of the webhook function ...
@@ -154,7 +154,7 @@ def webhook():
             tp = message_dict.get('tp')
             sl = message_dict.get('sl')
             comment = message_dict.get('comment')
-            app.logger.info(f"'{symbol}' order message received: '{data}'")
+            app.logger.info(f"'{symbol}' order message: '{data}'")
 
             # Get the current server time
             now = datetime.utcnow().time()
