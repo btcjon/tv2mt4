@@ -136,7 +136,7 @@ def webhook():
             elif keyword == 'down':
                 field_name = 'Trend'
                 update_value = 'down'
-            app.logger.info(f"Update: {symbol} - {keyword} received")
+            app.logger.info(f"{symbol} Update - {keyword} received")
             try:
                 if field_name is not None and update_value is not None:
                     airtable_operations.update_airtable_field(symbol, field_name, update_value)
@@ -154,7 +154,7 @@ def webhook():
             tp = message_dict.get('tp')
             sl = message_dict.get('sl')
             comment = message_dict.get('comment')
-            app.logger.info(f"Processing order message for symbol: {symbol}")
+            app.logger.info(f"'{symbol}' order message received: '{data}'")
 
             # Get the current server time
             now = datetime.utcnow().time()
@@ -170,7 +170,6 @@ def webhook():
             # Check if the current time is within the restricted period
             if start <= now <= end:
                 app.logger.info(f"Order Skipped: {symbol} - Time restriction ({start} - {end})")
-                app.logger.info(f"Time Restriction filter applied: Current time {now} is within the restricted period from {start} to {end}.")
                 return '', 200  # If it is, do not send any commands to PineConnector
 
             #We need to check config if BB_Filter is set to True
@@ -179,8 +178,7 @@ def webhook():
                 if record:
                     bb_present = record['fields'].get('BB')  # get the BB field
                     if bb_present:
-                        app.logger.info(f"Order not sent due to BB filter for symbol: {symbol}")
-                        app.logger.info(f"BB filter applied: Order for {symbol} filtered because BB is present.")
+                        app.logger.info(f"{symbol} BB filter = true = fail")
                         return '', 200  # if BB is present, do not send command to PineConnector
             record = airtable_operations.get_matching_record(symbol)
             if record:
@@ -198,7 +196,7 @@ def webhook():
             # Check for closelong and closeshort order types
             if order_type in ['closelong', 'closeshort']:
                 # Check for Time Restriction and BB Restriction
-                app.logger.info(f"Sending close order to PineConnector for symbol: {symbol}")
+                app.logger.info(f"{symbol} sending close order to PC")
                 send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
                 airtable_operations.update_airtable_field(symbol, f'State {order_type[5:].capitalize()}', 'closed')
                 airtable_operations.reset_airtable_field(symbol, f'{order_type[5:].capitalize()}#')
@@ -211,16 +209,15 @@ def webhook():
                 td9sell = record['fields'].get('TD9sell', False)
                 # Check if Long# is greater than 0 or if trend is up and no resistance or TD9sell signal is present
                 if long_count > 0:
-                    app.logger.info(f"Long# filter bypassed: Long# for {symbol} is greater than 0.")
+                    app.logger.info(f"{symbol} filters bypassed Long# > 0 = pass")
                 if trend == 'up':
-                    app.logger.info(f"Trend filter passed: Trend for {symbol} is up.")
+                    app.logger.info(f"{symbol} Trend up = pass")
                 if resistance:
-                    app.logger.info(f"Resistance filter failed: Resistance for {symbol} is present.")
+                    app.logger.info(f"{symbol} Resistance = true = fail")
                 if td9sell:
-                    app.logger.info(f"TD9sell filter failed: TD9sell for {symbol} is present.")
+                    app.logger.info(f"{symbol} TD9sell = true = fail")
                 if long_count > 0 or (trend == 'up' and not resistance and not td9sell):
-                    app.logger.info(f"Sending PineConnector command for {symbol} as all filters passed or Long# is greater than 0.")
-                    app.logger.info(f"Sending long order to PineConnector for symbol: {symbol}")
+                    app.logger.info(f"{symbol} filters passed or Long# > 0 = Sending long to PC")
                     send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
                     if long_count == 0:  # Only update if Long# was 0
                         airtable_operations.update_airtable_field(symbol, 'State Long', 'open')
@@ -232,22 +229,21 @@ def webhook():
                 td9buy = record['fields'].get('TD9buy', False)
                 # Check if Short# is greater than 0 or if trend is down and no support or TD9buy signal is present
                 if short_count > 0:
-                    app.logger.info(f"Short# filter bypassed: Short# for {symbol} is greater than 0.")
+                    app.logger.info(f"{symbol} filters bypassed as Short# > 0.")
                 if trend == 'down':
-                    app.logger.info(f"Trend filter passed: Trend for {symbol} is down.")
+                    app.logger.info(f"{symbol} Trend down = pass")
                 if support:
-                    app.logger.info(f"Support filter failed: Support for {symbol} is present.")
+                    app.logger.info(f"{symbol} Support = true = fail")
                 if td9buy:
-                    app.logger.info(f"TD9buy filter failed: TD9buy for {symbol} is present.")
+                    app.logger.info(f"{symbol} TD9buy = true = fail")
                 if short_count > 0 or (trend == 'down' and not support and not td9buy):
-                    app.logger.info(f"Sending PineConnector command for {symbol} as all filters passed or Short# is greater than 0.")
-                    app.logger.info(f"Sending short order to PineConnector for symbol: {symbol}")
+                    app.logger.info(f"{symbol} filters passed or Short# > 0 = Sending short to PC")
                     send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
                     if short_count == 0:  # Only update if Short# was 0
                         airtable_operations.update_airtable_field(symbol, 'State Short', 'open')
                         airtable_operations.increment_airtable_field(symbol, 'Short#')
             elif order_type in ['closelong', 'closeshort']:
-                app.logger.info(f"Sending close order to PineConnector for symbol: {symbol}")
+                app.logger.info(f"{symbol} sending close order to PC")
                 send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
                 airtable_operations.update_airtable_field(symbol, f'State {order_type[5:].capitalize()}', 'closed')
                 airtable_operations.reset_airtable_field(symbol, f'{order_type[5:].capitalize()}#')
