@@ -3,6 +3,7 @@ import logging
 import requests
 import config
 from datetime import datetime
+from datetime import time as datetime_time
 import time
 from airtable import Airtable
 
@@ -154,8 +155,8 @@ def webhook():
             now = datetime.utcnow().time()
 
             # Define the start and end of the restricted period in UTC ( FILTER_TIME = True)
-            start = time(21, 55)  # 9:55 PM UTC if not set in config
-            end = time(23, 0)  # 11:00 PM UTC if not set in config
+            start = datetime_time(21, 55)  # 9:55 PM UTC if not set in config
+            end = datetime_time(23, 0)  # 11:00 PM UTC if not set in config
             if hasattr(config, 'FILTER_TIME_START'):
                 start = config.FILTER_TIME_START
             if hasattr(config, 'FILTER_TIME_END'):
