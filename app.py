@@ -15,7 +15,7 @@ log.setLevel(logging.ERROR)
 handler = logging.StreamHandler()
 handler.setLevel(logging.INFO)  # Set to INFO to reduce the verbosity of the logs
 logging.Formatter.converter = time.localtime  # Use local time
-formatter = logging.Formatter('%(asctime)s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+formatter = logging.Formatter('%(message)s')
 handler.setFormatter(formatter)
 app.logger.addHandler(handler)
 app.logger.setLevel(logging.INFO)  # Set to INFO to reduce the verbosity of the logs
@@ -154,7 +154,7 @@ def webhook():
             tp = message_dict.get('tp')
             sl = message_dict.get('sl')
             comment = message_dict.get('comment')
-            app.logger.info(f"'{symbol}' order message: '{data}'")
+            app.logger.info(f"'{symbol}' order message received: '{data}'")
 
             # Get the current server time
             now = datetime.utcnow().time()
