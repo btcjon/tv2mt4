@@ -8,6 +8,10 @@ import time
 from airtable import Airtable
 
 app = Flask(__name__)
+#disable werkzeug logs
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)
+#
 handler = logging.StreamHandler()
 handler.setLevel(logging.INFO)  # Set to INFO to reduce the verbosity of the logs
 logging.Formatter.converter = time.localtime  # Use local time
