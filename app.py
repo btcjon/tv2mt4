@@ -277,4 +277,4 @@ def send_pineconnector_command(order_type, symbol, risk, tp, sl, comment):
     app.logger.debug(f"PineConnector response: {response.status_code} {response.reason} - {response.text}")
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=False)
