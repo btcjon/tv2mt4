@@ -198,55 +198,23 @@ def webhook():
                 # Check for Time Restriction and BB Restriction
                 app.logger.info(f"{symbol} sending close order to PC")
                 send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
-                airtable_operations.update_airtable_field(symbol, f'State {order_type[5:].capitalize()}', 'closed')
-                airtable_operations.reset_airtable_field(symbol, f'{order_type[5:].capitalize()}#')
 
-            # Add the check for Long# and Short# fields being greater than '0'
             if order_type == 'long':
-                long_count = int(record['fields'].get('Long#', 0))
                 trend = record['fields'].get('Trend')
                 resistance = record['fields'].get('Resistance', False)
                 td9sell = record['fields'].get('TD9sell', False)
-                # Check if Long# is greater than 0 or if trend is up and no resistance or TD9sell signal is present
-                if long_count > 0:
-                    app.logger.info(f"{symbol} filters bypassed Long# > 0 = pass")
-                if trend == 'up':
-                    app.logger.info(f"{symbol} Trend up = pass")
-                if resistance:
-                    app.logger.info(f"{symbol} Resistance = true = fail")
-                if td9sell:
-                    app.logger.info(f"{symbol} TD9sell = true = fail")
-                if long_count > 0 or (trend == 'up' and not resistance and not td9sell):
-                    app.logger.info(f"{symbol} filters passed or Long# > 0 = Sending long to PC")
+                # Check if trend is up and no resistance or TD9sell signal is present
+                if trend == 'up' and not resistance and not td9sell:
+                    app.logger.info(f"{symbol} filters passed = Sending long to PC")
                     send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
-                    if long_count == 0:  # Only update if Long# was 0
-                        airtable_operations.update_airtable_field(symbol, 'State Long', 'open')
-                        airtable_operations.increment_airtable_field(symbol, 'Long#')
             elif order_type == 'short':
-                short_count = int(record['fields'].get('Short#', 0))
                 trend = record['fields'].get('Trend')
                 support = record['fields'].get('Support', False)
                 td9buy = record['fields'].get('TD9buy', False)
-                # Check if Short# is greater than 0 or if trend is down and no support or TD9buy signal is present
-                if short_count > 0:
-                    app.logger.info(f"{symbol} filters bypassed as Short# > 0.")
-                if trend == 'down':
-                    app.logger.info(f"{symbol} Trend down = pass")
-                if support:
-                    app.logger.info(f"{symbol} Support = true = fail")
-                if td9buy:
-                    app.logger.info(f"{symbol} TD9buy = true = fail")
-                if short_count > 0 or (trend == 'down' and not support and not td9buy):
-                    app.logger.info(f"{symbol} filters passed or Short# > 0 = Sending short to PC")
+                # Check if trend is down and no support or TD9buy signal is present
+                if trend == 'down' and not support and not td9buy:
+                    app.logger.info(f"{symbol} filters passed = Sending short to PC")
                     send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
-                    if short_count == 0:  # Only update if Short# was 0
-                        airtable_operations.update_airtable_field(symbol, 'State Short', 'open')
-                        airtable_operations.increment_airtable_field(symbol, 'Short#')
-            elif order_type in ['closelong', 'closeshort']:
-                app.logger.info(f"{symbol} sending close order to PC")
-                send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
-                airtable_operations.update_airtable_field(symbol, f'State {order_type[5:].capitalize()}', 'closed')
-                airtable_operations.reset_airtable_field(symbol, f'{order_type[5:].capitalize()}#')
 
             return '', 200
 
