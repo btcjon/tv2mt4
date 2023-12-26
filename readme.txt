@@ -1,5 +1,3 @@
-Goal is to refactor these rules into yaml code that can be read ultimately by 'business-rules' for python. We want an easy way to add/adjust rules and conditions easily.
-
 Incoming messages will adhere to a standardized syntax for simplicity and flexibility in parsing.
 
 Message information will be key-value paired using '=' and separated by commas.
@@ -161,21 +159,6 @@ BB Restriction: No orders should be sent if 'BB' is present in 'State Long' or '
             - 6700960415957,short,EURAUD,risk=1,tp=0.07,sl=0.1,comment="7-0-30"
         - The FILTER_TIME and BB_Filter checks are applied. Additional filters are applied based on the 'entry' parameter.
 
-Action: Post-order Airtable field updates:
-
-State Long
-    1. if order-type=long was sent change field to 'open' (if it is not already)
-    2. if order-type=closelong was sent change field to 'closed'
-State Short
-    1. if order-type=short was sent change field to open (if it is not already)
-    2. if order-type=closeshort was sent change field to 'closed'
-Long#
-    1. if order-type=long was sent, increment the number by '1'
-    2. if order-type=closelong was sent, change number to '0'
-Short#
-    1. if order-type=short was sent, increment the number by '1'
-    2. if order-type=closeshort was sent, change number to '0'
-
     Handling of the USTEC100 symbol:
         - If the symbol is 'NAS100' or 'NAS100.PRO', it is replaced with 'USTEC100' before processing.
 
@@ -187,9 +170,3 @@ Short#
 
     BB Filter Configuration:
         - The presence of 'BB' in Airtable fields can be used as a filter based on the `BB_Filter` setting in `config.py`.
-
-    Incrementing and Resetting Long# and Short#:
-        - After sending an order of type 'long', the 'Long#' field is incremented by 1.
-        - After sending an order of type 'closelong', the 'Long#' field is reset to 0.
-        - After sending an order of type 'short', the 'Short#' field is incremented by 1.
-        - After sending an order of type 'closeshort', the 'Short#' field is reset to 0.

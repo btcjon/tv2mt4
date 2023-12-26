@@ -6,6 +6,7 @@ from datetime import datetime
 from datetime import time as datetime_time
 import time
 from airtable import Airtable
+import traceback
 
 app = Flask(__name__)
 #disable werkzeug logs
@@ -43,6 +44,7 @@ class AirtableOperations:
                 self.logger.warning(f"No matching record found for symbol: {symbol}")
         except requests.exceptions.ConnectionError as e:
             self.logger.error(f"Connection error when updating {field} for {symbol} to {value}: {e}, retrying...")
+            self.logger.debug(traceback.format_exc())
             time.sleep(5)  # Wait for 5 seconds before retrying
             try:
                 response = self.airtable.update(record['id'], {field: value})
@@ -51,6 +53,7 @@ class AirtableOperations:
                 self.logger.error(f"Failed to update {field} for {symbol} to {value} on retry: {retry_e}")
         except Exception as e:
             self.logger.error(f"Failed to update {field} for {symbol} to {value}: {e}")
+            self.logger.debug(traceback.format_exc())
 
     def increment_airtable_field(self, symbol, field):
         try:
@@ -65,12 +68,15 @@ class AirtableOperations:
                     self.logger.error(f"HTTP error occurred when incrementing {field} for {symbol}: {http_err.response.text}")
                 except Exception as e:
                     self.logger.error(f"Failed to increment {field} for {symbol}: {e}")
+                    self.logger.debug(traceback.format_exc())
             else:
                 self.logger.warning(f"No matching record found for symbol: {symbol}")
         except requests.exceptions.HTTPError as http_err:
             self.logger.error(f"HTTP error occurred when incrementing {field} for {symbol}: {http_err}")
+            self.logger.debug(traceback.format_exc())
         except Exception as e:
             self.logger.error(f"Failed to increment {field} for {symbol}: {e}")
+            self.logger.debug(traceback.format_exc())
 
     def reset_airtable_field(self, symbol, field):
         try:
@@ -82,8 +88,10 @@ class AirtableOperations:
                 self.logger.warning(f"No matching record found for symbol: {symbol}")
         except requests.exceptions.HTTPError as http_err:
             self.logger.error(f"HTTP error occurred when resetting {field} for {symbol}: {http_err}")
+            self.logger.debug(traceback.format_exc())
         except Exception as e:
             self.logger.error(f"Failed to reset {field} for {symbol}: {e}")
+            self.logger.debug(traceback.format_exc())
 
 airtable_operations = AirtableOperations()
 
@@ -225,20 +233,24 @@ def webhook():
         return 'Error', 500
 
 def send_pineconnector_command(order_type, symbol, risk, tp, sl, comment):
-    if not symbol.endswith('.PRO') and symbol != 'USTEC100':
-        symbol += '.PRO'  # append '.PRO' to the symbol only if it's not already there
-    pineconnector_command = f"{config.PINECONNECTOR_LICENSE_ID},{order_type},{symbol}"
-    if risk:
-        pineconnector_command += f",risk={risk}"
-    if tp:
-        pineconnector_command += f",tp={tp}"
-    if sl:
-        pineconnector_command += f",sl={sl}"
-    if comment:
-        # Ensure the comment is included with only a single set of quotes
-        pineconnector_command += f',comment={comment}'
-    response = requests.post(config.PINECONNECTOR_WEBHOOK_URL, data=pineconnector_command)
-    app.logger.debug(f"PineConnector response: {response.status_code} {response.reason} - {response.text}")
+    try:
+        if not symbol.endswith('.PRO') and symbol != 'USTEC100':
+            symbol += '.PRO'  # append '.PRO' to the symbol only if it's not already there
+        pineconnector_command = f"{config.PINECONNECTOR_LICENSE_ID},{order_type},{symbol}"
+        if risk:
+            pineconnector_command += f",risk={risk}"
+        if tp:
+            pineconnector_command += f",tp={tp}"
+        if sl:
+            pineconnector_command += f",sl={sl}"
+        if comment:
+            # Ensure the comment is included with only a single set of quotes
+            pineconnector_command += f',comment={comment}'
+        response = requests.post(config.PINECONNECTOR_WEBHOOK_URL, data=pineconnector_command)
+        app.logger.debug(f"PineConnector response: {response.status_code} {response.reason} - {response.text}")
+    except Exception as e:
+        app.logger.error(f"Error when sending command to PineConnector: {e}")
+        app.logger.debug(traceback.format_exc())
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=False)
