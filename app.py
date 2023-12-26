@@ -7,6 +7,7 @@ from datetime import time as datetime_time
 import time
 from airtable import Airtable
 import traceback
+from tenacity import retry, stop_after_attempt, wait_fixed
 
 app = Flask(__name__)
 #disable werkzeug logs
@@ -27,6 +28,7 @@ class AirtableOperations:
         self.airtable = Airtable(config.AIRTABLE_BASE_ID, config.AIRTABLE_TABLE_NAME, api_key=config.AIRTABLE_API_KEY)
         self.logger = logging.getLogger(__name__)
 
+    @retry(stop=stop_after_attempt(3), wait=wait_fixed(1))
     def get_matching_record(self, symbol):
         symbol_without_pro = symbol.replace('.PRO', '')
         records = self.airtable.get_all(formula=f"{{Symbol}} = '{symbol_without_pro}'")
