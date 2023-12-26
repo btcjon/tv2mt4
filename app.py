@@ -202,7 +202,7 @@ def webhook():
                 # Check for Time Restriction and BB Restriction
                 app.logger.info(f"{symbol} sending close order to PC")
                 send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
-
+# logging to help us understand what is happening
             record = airtable_operations.get_matching_record(symbol)
             if order_type == 'long':
                 trend = record['fields'].get('Trend')
