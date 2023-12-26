@@ -190,12 +190,6 @@ def webhook():
                     if bb_present:
                         app.logger.info(f"{symbol} BB filter = true = fail")
                         return '', 200  # if BB is present, do not send command to PineConnector
-            record = airtable_operations.get_matching_record(symbol)
-            if record:
-                bb_present = record['fields'].get('BB')  # get the BB field
-                if bb_present:
-                    app.logger.info(f"BB filter applied: Order for {symbol} filtered because BB is present.")
-                    return '', 200  # if BB is present, do not send command to PineConnector
 
             # If entry is false, bypass all filters except for FILTER_TIME and BB_Filter
             if not entry:
@@ -209,22 +203,37 @@ def webhook():
                 app.logger.info(f"{symbol} sending close order to PC")
                 send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
 
+            record = airtable_operations.get_matching_record(symbol)
             if order_type == 'long':
                 trend = record['fields'].get('Trend')
-                resistance = record['fields'].get('Resistance', False)
-                td9sell = record['fields'].get('TD9sell', False)
-                # Check if trend is up and no resistance or TD9sell signal is present
-                if trend == 'up' and not resistance and not td9sell:
-                    app.logger.info(f"{symbol} filters passed = Sending long to PC")
-                    send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
+                if trend == 'up':
+                    resistance = record['fields'].get('Resistance', False)
+                    if not resistance:
+                        td9sell = record['fields'].get('TD9sell', False)
+                        if not td9sell:
+                            app.logger.info(f"{symbol} filters passed = Sending long to PC")
+                            send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
+                        else:
+                            app.logger.info(f"{symbol} blocked by TD9sell filter for long order")
+                    else:
+                        app.logger.info(f"{symbol} blocked by Resistance filter for long order")
+                else:
+                    app.logger.info(f"{symbol} blocked by Trend filter for long order")
             elif order_type == 'short':
                 trend = record['fields'].get('Trend')
-                support = record['fields'].get('Support', False)
-                td9buy = record['fields'].get('TD9buy', False)
-                # Check if trend is down and no support or TD9buy signal is present
-                if trend == 'down' and not support and not td9buy:
-                    app.logger.info(f"{symbol} filters passed = Sending short to PC")
-                    send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
+                if trend == 'down':
+                    support = record['fields'].get('Support', False)
+                    if not support:
+                        td9buy = record['fields'].get('TD9buy', False)
+                        if not td9buy:
+                            app.logger.info(f"{symbol} filters passed = Sending short to PC")
+                            send_pineconnector_command(order_type, symbol, risk, tp, sl, comment)
+                        else:
+                            app.logger.info(f"{symbol} blocked by TD9buy filter for short order")
+                    else:
+                        app.logger.info(f"{symbol} blocked by Support filter for short order")
+                else:
+                    app.logger.info(f"{symbol} blocked by Trend filter for short order")
 
             return '', 200
 
