@@ -2,3 +2,4 @@ flask
 requests
 airtable-python-wrapper
 gunicorn
+tenacity
